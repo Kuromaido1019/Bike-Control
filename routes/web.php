@@ -40,6 +40,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', fn() => view('index'))->name('home');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::resource('bikes', BikeController::class)->except(['destroy']);
+    Route::post('/bicicletas', [BikeController::class, 'store'])->name('bike.store');
+    Route::delete('/bicicletas/{bike}', [BikeController::class, 'destroy'])->name('bike.destroy');
+
 
     // Rutas para ADMIN - dejar abierta durante pruebas (sin 'can:isAdmin')
     Route::prefix('admin')->name('admin.')->group(function () {

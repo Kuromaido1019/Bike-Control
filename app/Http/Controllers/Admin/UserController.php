@@ -22,6 +22,7 @@ class UserController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'rut' => 'required|string|max:20|unique:users,rut',
             'role' => 'required|in:admin,guardia,visitante',
             'password' => 'required|string|min:6',
         ]);
@@ -45,12 +46,14 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
+            'rut' => 'required|string|max:20|unique:users,rut,' . $user->id,
             'role' => 'required|in:admin,guardia,visitante',
         ]);
 
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
+            'rut' => $request->rut,
             'role' => $request->role,
         ]);
 

@@ -36,7 +36,8 @@ class BikeController extends Controller
         ]);
         $validated['user_id'] = auth()->id();
         Bike::create($validated);
-        return redirect()->route('bikes.index')->with('success', 'Bicicleta registrada correctamente.');
+        // Redirigir de vuelta a la ficha personal del usuario
+        return redirect()->back()->with('success', 'Bicicleta registrada correctamente.');
     }
 
     /**
@@ -81,7 +82,15 @@ class BikeController extends Controller
     public function destroy(Bike $bike)
     {
         $this->authorize('delete', $bike);
-        $bike->delete();
-        return redirect()->back()->with('success', 'Bicicleta eliminada correctamente.');
+        try {
+            $bike->delete();
+            return redirect()->back()->with('success', 'Bicicleta eliminada correctamente.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) {
+                // Error de integridad referencial
+                return redirect()->back()->with('error', 'No se puede eliminar la bicicleta porque tiene registros asociados.');
+            }
+            throw $e;
+        }
     }
 }

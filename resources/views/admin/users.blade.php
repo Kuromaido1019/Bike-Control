@@ -41,6 +41,7 @@
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>RUT</th>
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>Rol</th>
@@ -51,6 +52,7 @@
                     @foreach($users as $user)
                     <tr>
                         <td>{{ $user->id }}</td>
+                        <td>{{ $user->rut }}</td>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
                         <td>{{ ucfirst($user->role) }}</td>
@@ -58,6 +60,7 @@
                             <button
                                 class="btn btn-sm btn-info btn-edit"
                                 data-id="{{ $user->id }}"
+                                data-id="{{ $user->rut }}"
                                 data-name="{{ $user->name }}"
                                 data-email="{{ $user->email }}"
                                 data-role="{{ $user->role }}">
@@ -123,6 +126,11 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="rut" class="form-label">RUT</label>
+                        <input type="text" class="form-control @error('rut') is-invalid @enderror" id="rut" name="rut" value="{{ old('rut', isset($user) ? $user->rut : '') }}" required>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="role" class="form-label">Rol</label>
                         <select class="form-control @error('role') is-invalid @enderror" id="role" name="role" required>
                             <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
@@ -169,6 +177,7 @@
             $('#user_id').val('');
             $('#name').val('');
             $('#email').val('');
+            $('#rut').val('');
             $('#role').val('admin');
         });
 
