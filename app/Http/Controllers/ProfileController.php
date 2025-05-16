@@ -29,16 +29,22 @@ class ProfileController extends Controller
         // Actualizar datos básicos del usuario
         $user->name = $request->input('name');
         $user->email = $request->input('email');
+        if ($request->has('rut')) {
+            $user->rut = $request->input('rut');
+        }
         $user->save();
 
-        // Actualizar datos del perfil
+        // Actualizar o crear datos del perfil
         $profile = $user->profile;
-        if ($profile) {
-            $profile->phone = $request->input('phone');
-            $profile->alt_phone = $request->input('alt_phone');
-            $profile->career = $request->input('career');
-            $profile->save();
+        if (!$profile) {
+            $profile = new \App\Models\Profile();
+            $profile->user_id = $user->id;
         }
+        $profile->phone = $request->input('phone');
+        $profile->alt_phone = $request->input('alt_phone');
+        $profile->career = $request->input('career');
+        $profile->birth_date = $request->input('birth_date');
+        $profile->save();
 
         return redirect()->back()->with('success', 'Datos actualizados correctamente.');
     }

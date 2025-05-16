@@ -60,7 +60,7 @@
                             <button
                                 class="btn btn-sm btn-info btn-edit"
                                 data-id="{{ $user->id }}"
-                                data-id="{{ $user->rut }}"
+                                data-rut="{{ $user->rut }}"
                                 data-name="{{ $user->name }}"
                                 data-email="{{ $user->email }}"
                                 data-role="{{ $user->role }}">
@@ -185,6 +185,7 @@
         $(document).on('click', '.btn-edit', function() {
             console.log('Botón editar presionado');
             var id = $(this).data('id');
+            var rut = $(this).data('rut');
             var name = $(this).data('name');
             var email = $(this).data('email');
             var role = $(this).data('role');
@@ -196,6 +197,7 @@
             $('#user_id').val(id);
             $('#name').val(name);
             $('#email').val(email);
+            $('#rut').val(rut);
             $('#role').val(role);
             $('#passwordField').hide();
             $('#password').prop('required', false).val('');

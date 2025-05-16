@@ -26,7 +26,7 @@
                         <dt class="col-sm-5">Email</dt>
                         <dd class="col-sm-7">{{ Auth::user()->email }}</dd>
                         <dt class="col-sm-5">RUT</dt>
-                        <dd class="col-sm-7">{{ Auth::user()->profile->rut ?? '-' }}</dd>
+                        <dd class="col-sm-7">{{ Auth::user()->rut ?? '-' }}</dd>
                         <dt class="col-sm-5">Fecha de nacimiento</dt>
                         <dd class="col-sm-7">{{ Auth::user()->profile->birth_date ?? '-' }}</dd>
                         <dt class="col-sm-5">Teléfono</dt>
@@ -63,6 +63,10 @@
                             <div class="mb-3">
                                 <label for="editEmail" class="form-label">Email</label>
                                 <input type="email" class="form-control" id="editEmail" name="email" value="{{ Auth::user()->email }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editBirthDate" class="form-label">Fecha de nacimiento</label>
+                                <input type="date" class="form-control" id="editBirthDate" name="birth_date" value="{{ Auth::user()->profile->birth_date ?? '' }}">
                             </div>
                             <div class="mb-3">
                                 <label for="editPhone" class="form-label">Teléfono</label>
