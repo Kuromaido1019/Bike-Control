@@ -43,24 +43,16 @@
                             <td>{{ $access->bike ? $access->bike->brand . ' ' . $access->bike->model : '-' }}</td>
                             <td>{{ $access->guardUser->name ?? '-' }}</td>
                             <td>
-                                @if(!$access->entrance_time)
-                                    <form method="POST" action="{{ route('guard.control-acceso.update', $access->id) }}" style="display:inline">
-                                        @csrf
-                                        @method('PUT')
-                                        <input type="hidden" name="entrance_time" value="{{ now()->format('Y-m-d\TH:i') }}">
-                                        <input type="hidden" name="user_id" value="{{ $access->user_id }}">
-                                        <input type="hidden" name="guard_id" value="{{ $access->guard_id }}">
-                                        <input type="hidden" name="bike_id" value="{{ $access->bike_id }}">
-                                        <input type="hidden" name="exit_time" value="{{ $access->exit_time }}">
-                                        <input type="hidden" name="observation" value="{{ $access->observation }}">
-                                        <button type="submit" class="btn btn-warning btn-sm">Marcar Entrada</button>
-                                    </form>
+                                @if($access->entrance_time)
+                                    {{ \Carbon\Carbon::parse($access->entrance_time)->format('H:i') }}
                                 @else
-                                    {{ $access->entrance_time }}
+                                    -
                                 @endif
                             </td>
                             <td>
-                                @if(!$access->exit_time)
+                                @if($access->exit_time)
+                                    {{ \Carbon\Carbon::parse($access->exit_time)->format('H:i') }}
+                                @else
                                     <form method="POST" action="{{ route('guard.control-acceso.update', $access->id) }}" style="display:inline">
                                         @csrf
                                         @method('PUT')
@@ -72,8 +64,6 @@
                                         <input type="hidden" name="observation" value="{{ $access->observation }}">
                                         <button type="submit" class="btn btn-success btn-sm">Marcar Salida</button>
                                     </form>
-                                @else
-                                    {{ $access->exit_time }}
                                 @endif
                             </td>
                             <td>{{ $access->observation ?? '-' }}</td>
@@ -271,14 +261,21 @@ $(document).ready(function() {
     });
 
     // Rellenar modal de edición con los datos del registro
+    function formatForDatetimeLocal(datetime) {
+        if (!datetime) return '';
+        let [date, time] = datetime.split(' ');
+        if (!date || !time) return '';
+        let [hh, mm] = time.split(':');
+        return `${date}T${hh}:${mm}`;
+    }
     $('.btn-edit-access').on('click', function() {
         const btn = $(this);
         const id = btn.data('id');
         $('#editAccessForm').attr('action', `/guard/control-acceso/${id}`);
         $('#edit_user_id').val(btn.data('user_id'));
         $('#edit_bike_id').val(btn.data('bike_id'));
-        $('#edit_entrance_time').val(btn.data('entrance_time').replace(' ', 'T'));
-        $('#edit_exit_time').val(btn.data('exit_time') ? btn.data('exit_time').replace(' ', 'T') : '');
+        $('#edit_entrance_time').val(formatForDatetimeLocal(btn.data('entrance_time')));
+        $('#edit_exit_time').val(btn.data('exit_time') ? formatForDatetimeLocal(btn.data('exit_time')) : '');
         $('#edit_observation').val(btn.data('observation'));
     });
 
