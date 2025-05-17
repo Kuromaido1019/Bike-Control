@@ -51,9 +51,14 @@ Route::middleware('auth')->group(function () {
     });
 
     // Rutas para Guardias
-    Route::middleware('can:isGuard')->group(function () {
-        Route::get('/guard/dashboard', fn() => view('guard.dashboard'))->name('guard.dashboard');
-    });
+    Route::get('/guard/control-acceso', [\App\Http\Controllers\AccessController::class, 'index'])->name('guard.control-acceso');
+    Route::post('/guard/control-acceso', [\App\Http\Controllers\AccessController::class, 'store'])->name('guard.control-acceso.store');
+    Route::put('/guard/control-acceso/{access}', [\App\Http\Controllers\AccessController::class, 'update'])->name('guard.control-acceso.update');
+    Route::post('/guard/control-acceso/quick', [\App\Http\Controllers\AccessController::class, 'quickAccess'])->name('guard.control-acceso.quick');
+    // Nuevas rutas para el wizard de ingreso rápido
+    Route::post('/guard/control-acceso/quick/user', [\App\Http\Controllers\AccessController::class, 'quickUser'])->name('guard.control-acceso.quick.user');
+    Route::post('/guard/control-acceso/quick/bike', [\App\Http\Controllers\AccessController::class, 'quickBike'])->name('guard.control-acceso.quick.bike');
+    Route::delete('/guard/control-acceso/quick/cancel/{user}', [\App\Http\Controllers\AccessController::class, 'quickCancel']);
 
     // Rutas para Visitantes
     Route::middleware('can:isVisitor')->group(function () {

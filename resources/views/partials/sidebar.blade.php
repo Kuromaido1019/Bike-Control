@@ -41,21 +41,11 @@
     @if(Auth::user()->role === 'guardia')
     <!-- Opciones solo para guardia -->
     <div class="sidebar-heading">Guardia</div>
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-            aria-expanded="true" aria-controls="collapseTwo">
+    <li class="nav-item {{ request()->routeIs('guard.control-acceso') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('guard.control-acceso') }}">
             <i class="fas fa-fw fa-shield-dog"></i>
             <span>Control Acceso</span>
         </a>
-        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Funciones:</h6>
-                <a class="collapse-item" href="#">Acceso Bicicleta</a>
-                <a class="collapse-item" href="#">Retiro de Bicicleta</a>
-                <a class="collapse-item" href="#">Modificar Registro</a>
-                <a class="collapse-item" href="#">Registro Accesos salida</a>
-            </div>
-        </div>
     </li>
     <hr class="sidebar-divider">
     @endif
