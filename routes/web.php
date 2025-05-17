@@ -48,6 +48,15 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
         Route::resource('users', UserController::class); // <- esto crea admin.users.index, etc.
+
+        Route::get('/control-acceso', [\App\Http\Controllers\AccessController::class, 'index'])->name('control-acceso');
+        Route::post('/control-acceso', [\App\Http\Controllers\AccessController::class, 'store'])->name('control-acceso.store');
+        Route::put('/control-acceso/{access}', [\App\Http\Controllers\AccessController::class, 'update'])->name('control-acceso.update');
+        Route::delete('/control-acceso/{access}', [\App\Http\Controllers\AccessController::class, 'destroy'])->name('control-acceso.destroy');
+        Route::post('/control-acceso/quick', [\App\Http\Controllers\AccessController::class, 'quickAccess'])->name('control-acceso.quick');
+        Route::post('/control-acceso/quick/user', [\App\Http\Controllers\AccessController::class, 'quickUser'])->name('control-acceso.quick.user');
+        Route::post('/control-acceso/quick/bike', [\App\Http\Controllers\AccessController::class, 'quickBike'])->name('control-acceso.quick.bike');
+        Route::delete('/control-acceso/quick/cancel/{user}', [\App\Http\Controllers\AccessController::class, 'quickCancel']);
     });
 
     // Rutas para Guardias
@@ -55,7 +64,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/guard/control-acceso', [\App\Http\Controllers\AccessController::class, 'store'])->name('guard.control-acceso.store');
     Route::put('/guard/control-acceso/{access}', [\App\Http\Controllers\AccessController::class, 'update'])->name('guard.control-acceso.update');
     Route::post('/guard/control-acceso/quick', [\App\Http\Controllers\AccessController::class, 'quickAccess'])->name('guard.control-acceso.quick');
-    // Nuevas rutas para el wizard de ingreso rápido
     Route::post('/guard/control-acceso/quick/user', [\App\Http\Controllers\AccessController::class, 'quickUser'])->name('guard.control-acceso.quick.user');
     Route::post('/guard/control-acceso/quick/bike', [\App\Http\Controllers\AccessController::class, 'quickBike'])->name('guard.control-acceso.quick.bike');
     Route::delete('/guard/control-acceso/quick/cancel/{user}', [\App\Http\Controllers\AccessController::class, 'quickCancel']);

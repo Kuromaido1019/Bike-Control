@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Access;
 use App\Models\Bike;
 use App\Models\User;
@@ -14,7 +15,7 @@ class AccessController extends Controller
         $accesses = Access::with(['user', 'guardUser', 'bike'])->orderByDesc('entrance_time')->get();
         $bikes = Bike::all();
         $visitantes = User::where('role', 'visitante')->get();
-        return view('guardia.control-acceso', compact('accesses', 'bikes', 'visitantes'));
+        return view(request()->is('admin/*') ? 'admin.control-acceso' : 'guardia.control-acceso', compact('accesses', 'bikes', 'visitantes'));
     }
 
     public function store(Request $request)
@@ -187,5 +188,11 @@ class AccessController extends Controller
             \DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    public function destroy(Access $access)
+    {
+        $access->delete();
+        return redirect()->route('admin.control-acceso')->with('success', 'Acceso eliminado correctamente.');
     }
 }

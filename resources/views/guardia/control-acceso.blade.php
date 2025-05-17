@@ -31,7 +31,10 @@
                             <th>Entrada</th>
                             <th>Salida</th>
                             <th>Observación</th>
-                            <th>Acciones</th>
+                            <th>Editar</th>
+                            @if(request()->is('admin/*'))
+                            <th>Eliminar</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -80,6 +83,15 @@
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
                             </td>
+                            @if(request()->is('admin/*'))
+                            <td>
+                                <form method="POST" action="{{ route('admin.control-acceso.destroy', $access->id) }}" style="display:inline" onsubmit="return confirm('¿Está seguro de eliminar este acceso?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Eliminar</button>
+                                </form>
+                            </td>
+                            @endif
                         </tr>
                         @endforeach
                     </tbody>

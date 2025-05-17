@@ -29,6 +29,12 @@
             <span>Gestión de Usuarios</span>
         </a>
     </li>
+    <li class="nav-item {{ request()->is('admin/control-acceso*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.control-acceso') }}">
+            <i class="fas fa-key"></i>
+            <span>Gestión de Accesos</span>
+        </a>
+    </li>
     <li class="nav-item">
         <a class="nav-link" href="#">
             <i class="fas fa-database"></i>
