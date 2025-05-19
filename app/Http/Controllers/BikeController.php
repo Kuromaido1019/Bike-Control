@@ -93,4 +93,32 @@ class BikeController extends Controller
             throw $e;
         }
     }
+
+    /**
+     * Associate a new bike with a user by RUT.
+     */
+    public function associateBike(Request $request)
+    {
+        $validated = $request->validate([
+            'rut' => 'required|string|exists:users,rut',
+            'brand' => 'required|string|max:255',
+            'model' => 'required|string|max:255',
+            'color' => 'required|string|max:255',
+        ]);
+
+        $user = \App\Models\User::where('rut', $validated['rut'])->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Usuario no encontrado.'], 404);
+        }
+
+        $bike = new Bike();
+        $bike->user_id = $user->id;
+        $bike->brand = $validated['brand'];
+        $bike->model = $validated['model'];
+        $bike->color = $validated['color'];
+        $bike->save();
+
+        return response()->json(['success' => true, 'message' => 'Bicicleta asociada correctamente.']);
+    }
 }

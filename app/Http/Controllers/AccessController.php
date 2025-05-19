@@ -28,26 +28,35 @@ class AccessController extends Controller
         }
         $data = $request->validate([
             'bike_id' => 'nullable|exists:bikes,id',
-            'entrance_time' => 'required|date',
             'observation' => 'nullable|string',
             'guard_id' => 'required|exists:users,id',
         ]);
         $data['user_id'] = $user->id;
+        $data['entrance_time'] = now()->format('Y-m-d H:i:s'); // Guardar la fecha y hora actual en formato DATETIME
+        $data['exit_time'] = null; // Dejar vacío el campo de salida
         Access::create($data);
         return redirect()->route('guard.control-acceso')->with('success', 'Acceso registrado correctamente.');
     }
 
     public function update(Request $request, Access $access)
     {
+        if ($request->has('mark_exit')) {
+            // Asegurarse de que solo se actualice el campo `exit_time`
+            $access->update(['exit_time' => now()->format('Y-m-d H:i:s')]);
+            return redirect()->route('guard.control-acceso')->with('success', 'Hora de salida registrada correctamente.');
+        }
+
         $data = $request->validate([
             'user_id' => 'required|exists:users,id',
             'guard_id' => 'required|exists:users,id',
             'bike_id' => 'nullable|exists:bikes,id',
-            'entrance_time' => 'required|date',
-            'exit_time' => 'nullable|date',
+            'entrance_time' => 'required',
+            'exit_time' => 'nullable',
             'observation' => 'nullable|string',
         ]);
+
         $access->update($data);
+
         return redirect()->route('guard.control-acceso')->with('success', 'Registro actualizado correctamente.');
     }
 
@@ -73,7 +82,7 @@ class AccessController extends Controller
         ]);
 
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
 
             // Crear usuario visitante
             $user = \App\Models\User::create([
@@ -100,14 +109,14 @@ class AccessController extends Controller
                 'user_id' => $user->id,
                 'guard_id' => $data['guard_id'],
                 'bike_id' => $bike->id,
-                'entrance_time' => now(),
+                'entrance_time' => now()->format('Y-m-d H:i:s'), // Asignar fecha y hora actual como string
                 'observation' => $data['observation'] ?? null,
             ]);
 
-            \DB::commit();
+            DB::commit();
             return redirect()->route('guard.control-acceso')->with('success', 'Ingreso rápido registrado correctamente.');
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return back()->withInput()->with('error', 'Error al registrar ingreso rápido: ' . $e->getMessage());
         }
     }
@@ -123,7 +132,7 @@ class AccessController extends Controller
             'guard_id' => 'required|exists:users,id',
         ]);
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -134,10 +143,10 @@ class AccessController extends Controller
             $user->profile()->create([
                 'phone' => $data['phone'],
             ]);
-            \DB::commit();
+            DB::commit();
             return response()->json(['success' => true, 'user_id' => $user->id]);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -153,7 +162,7 @@ class AccessController extends Controller
             'guard_id' => 'required|exists:users,id',
         ]);
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
             $user = User::findOrFail($data['user_id']);
             $bike = $user->bikes()->create([
                 'brand' => $data['bike_brand'],
@@ -163,13 +172,13 @@ class AccessController extends Controller
                 'user_id' => $user->id,
                 'guard_id' => $data['guard_id'],
                 'bike_id' => $bike->id,
-                'entrance_time' => now(),
+                'entrance_time' => now()->format('Y-m-d H:i:s'), // Asignar fecha y hora actual como string
                 'observation' => $data['observation'] ?? null,
             ]);
-            \DB::commit();
+            DB::commit();
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -178,14 +187,14 @@ class AccessController extends Controller
     public function quickCancel(User $user)
     {
         try {
-            \DB::beginTransaction();
+            DB::beginTransaction();
             $user->bikes()->delete();
             $user->profile()->delete();
             $user->delete();
-            \DB::commit();
+            DB::commit();
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }

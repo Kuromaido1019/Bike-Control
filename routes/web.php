@@ -15,6 +15,13 @@ Route::redirect('/', '/login');
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', UserController::class)->except(['create']);
 });
+
+// Endpoint para bicicletas por RUT (AJAX)
+Route::get('/api/bicicletas-por-rut/{rut}', [\App\Http\Controllers\AccessController::class, 'getBikesByRut']);
+
+// Endpoint para asociar bicicleta (AJAX)
+Route::post('/api/asociar-bicicleta', [\App\Http\Controllers\BikeController::class, 'associateBike']);
+
 //--------------------------------------------------------------------------
 // Rutas de Autenticación
 //--------------------------------------------------------------------------
@@ -42,7 +49,6 @@ Route::middleware('auth')->group(function () {
     Route::resource('bikes', BikeController::class)->except(['destroy']);
     Route::post('/bicicletas', [BikeController::class, 'store'])->name('bike.store');
     Route::delete('/bicicletas/{bike}', [BikeController::class, 'destroy'])->name('bike.destroy');
-
 
     // Rutas para ADMIN - dejar abierta durante pruebas (sin 'can:isAdmin')
     Route::prefix('admin')->name('admin.')->group(function () {

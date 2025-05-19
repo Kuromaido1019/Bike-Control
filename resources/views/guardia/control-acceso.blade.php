@@ -32,7 +32,7 @@
                             <th>Salida</th>
                             <th>Observación</th>
                             <th>Editar</th>
-                            @if(request()->is('admin/*'))
+                            @if(str_contains(request()->path(), 'admin'))
                             <th>Eliminar</th>
                             @endif
                         </tr>
@@ -59,12 +59,7 @@
                                     <form method="POST" action="{{ route('guard.control-acceso.update', $access->id) }}" style="display:inline">
                                         @csrf
                                         @method('PUT')
-                                        <input type="hidden" name="exit_time" value="{{ now()->format('Y-m-d\TH:i') }}">
-                                        <input type="hidden" name="user_id" value="{{ $access->user_id }}">
-                                        <input type="hidden" name="guard_id" value="{{ $access->guard_id }}">
-                                        <input type="hidden" name="bike_id" value="{{ $access->bike_id }}">
-                                        <input type="hidden" name="entrance_time" value="{{ $access->entrance_time }}">
-                                        <input type="hidden" name="observation" value="{{ $access->observation }}">
+                                        <input type="hidden" name="mark_exit" value="true">
                                         <button type="submit" class="btn btn-success btn-sm">Marcar Salida</button>
                                     </form>
                                 @endif
@@ -83,7 +78,7 @@
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
                             </td>
-                            @if(request()->is('admin/*'))
+                            @if(str_contains(request()->path(), 'admin'))
                             <td>
                                 <form method="POST" action="{{ route('admin.control-acceso.destroy', $access->id) }}" style="display:inline" onsubmit="return confirm('¿Está seguro de eliminar este acceso?');">
                                     @csrf
@@ -121,10 +116,6 @@
                         <select class="form-control" name="bike_id" id="bike_id" disabled>
                             <option value="">Seleccione un visitante primero</option>
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="entrance_time" class="form-label">Fecha y hora de entrada</label>
-                        <input type="datetime-local" class="form-control" name="entrance_time" required>
                     </div>
                     <div class="mb-3">
                         <label for="observation" class="form-label">Observación</label>
@@ -220,33 +211,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="guard_id" value="{{ Auth::id() }}">
-                    <div class="mb-3">
-                        <label for="edit_user_id" class="form-label">Visitante</label>
-                        <select class="form-control" name="user_id" id="edit_user_id" required>
-                            <option value="">Seleccione...</option>
-                            @foreach($visitantes as $visitante)
-                                <option value="{{ $visitante->id }}">{{ $visitante->name }} ({{ $visitante->rut }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_bike_id" class="form-label">Bicicleta</label>
-                        <select class="form-control" name="bike_id" id="edit_bike_id">
-                            <option value="">Sin bicicleta</option>
-                            @foreach($bikes as $bike)
-                                <option value="{{ $bike->id }}">{{ $bike->brand }} {{ $bike->model }} ({{ $bike->user->name }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_entrance_time" class="form-label">Fecha y hora de entrada</label>
-                        <input type="datetime-local" class="form-control" name="entrance_time" id="edit_entrance_time" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_exit_time" class="form-label">Fecha y hora de salida</label>
-                        <input type="datetime-local" class="form-control" name="exit_time" id="edit_exit_time">
-                    </div>
+                    <!-- Solo permitir editar la observación -->
                     <div class="mb-3">
                         <label for="edit_observation" class="form-label">Observación</label>
                         <textarea class="form-control" name="observation" id="edit_observation"></textarea>
@@ -273,26 +238,20 @@ $(document).ready(function() {
     });
 
     // Rellenar modal de edición con los datos del registro
-    function formatForDatetimeLocal(datetime) {
-        if (!datetime) return '';
-        let [date, time] = datetime.split(' ');
-        if (!date || !time) return '';
-        let [hh, mm] = time.split(':');
-        return `${date}T${hh}:${mm}`;
-    }
     $('.btn-edit-access').on('click', function() {
         const btn = $(this);
         const id = btn.data('id');
         $('#editAccessForm').attr('action', `/guard/control-acceso/${id}`);
-        $('#edit_user_id').val(btn.data('user_id'));
-        $('#edit_bike_id').val(btn.data('bike_id'));
-        $('#edit_entrance_time').val(formatForDatetimeLocal(btn.data('entrance_time')));
-        $('#edit_exit_time').val(btn.data('exit_time') ? formatForDatetimeLocal(btn.data('exit_time')) : '');
         $('#edit_observation').val(btn.data('observation'));
+        @if(request()->is('admin/*'))
+        $('#edit_entrance_time').val(btn.data('entrance_time'));
+        $('#edit_exit_time').val(btn.data('exit_time'));
+        @endif
     });
 
     // Lógica para cargar bicicletas según RUT
-    $('#visitor_rut').on('blur', function() {
+    $('#visitor_rut').on('change', function(e) {
+        e.preventDefault(); // Evitar el comportamiento predeterminado
         var rut = $(this).val();
         if (!rut) return;
         $('#bike_id').prop('disabled', true).html('<option value="">Buscando...</option>');
@@ -306,12 +265,112 @@ $(document).ready(function() {
                         options += `<option value="${bike.id}">${bike.brand} ${bike.model}</option>`;
                     });
                     $('#bike_id').html(options).prop('disabled', false);
+                    $('#bike_id').removeClass('is-invalid');
+                    $('#bike_id').next('.invalid-feedback').remove();
                 } else {
                     $('#bike_id').html('<option value="">Sin bicicletas registradas</option>').prop('disabled', true);
+                    if ($('#bike_id').next('.invalid-feedback').length === 0) {
+                        $('#bike_id').addClass('is-invalid').after('<div class="invalid-feedback">Este usuario no tiene bicicletas asociadas. No se puede registrar el acceso.</div>');
+                    }
+                    if ($('#addBikeBtn').length === 0) {
+                        $('#bike_id').parent().append('<button type="button" class="btn btn-warning mt-2" id="addBikeBtn">Asociar Bicicleta</button>');
+                    }
                 }
+
+                // Asegurarse de que el modal permanezca abierto
+                var accessModal = new bootstrap.Modal(document.getElementById('addAccessModal'));
+                accessModal.show();
             },
             error: function() {
                 $('#bike_id').html('<option value="">Error al buscar</option>').prop('disabled', true);
+                if ($('#bike_id').next('.invalid-feedback').length === 0) {
+                    $('#bike_id').addClass('is-invalid').after('<div class="invalid-feedback">Error al buscar bicicletas.</div>');
+                }
+                if ($('#addBikeBtn').length === 0) {
+                    $('#bike_id').parent().append('<button type="button" class="btn btn-warning mt-2" id="addBikeBtn">Asociar Bicicleta</button>');
+                }
+
+                // Asegurarse de que el modal permanezca abierto incluso en caso de error
+                var accessModal = new bootstrap.Modal(document.getElementById('addAccessModal'));
+                accessModal.show();
+            }
+        });
+    });
+
+    // Evento para mostrar modal de asociar bicicleta
+    $(document).on('click', '#addBikeBtn', function() {
+        // Cerrar el modal de "Nuevo Acceso"
+        $('#addAccessModal').modal('hide');
+
+        // Eliminar cualquier modal existente para evitar conflictos
+        $('#modalAsociarBicicleta').remove();
+
+        // Agregar el modal dinámicamente
+        $('body').append(`
+        <div class="modal fade" id="modalAsociarBicicleta" tabindex="-1" aria-labelledby="modalAsociarBicicletaLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="formAsociarBicicleta">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalAsociarBicicletaLabel">Asociar Bicicleta</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="nueva_marca" class="form-label">Marca</label>
+                                <input type="text" class="form-control" id="nueva_marca" name="brand" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nueva_modelo" class="form-label">Modelo</label>
+                                <input type="text" class="form-control" id="nueva_modelo" name="model" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nueva_color" class="form-label">Color</label>
+                                <input type="text" class="form-control" id="nueva_color" name="color" required>
+                            </div>
+                            <input type="hidden" id="rut_asociar" name="rut">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Guardar Bicicleta</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>`);
+
+        // Establecer el RUT en el campo oculto
+        $('#rut_asociar').val($('#visitor_rut').val());
+
+        // Inicializar el modal con Bootstrap
+        var modal = new bootstrap.Modal(document.getElementById('modalAsociarBicicleta'));
+        modal.show();
+    });
+
+    // Evento submit para asociar bicicleta
+    $(document).on('submit', '#formAsociarBicicleta', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        $.ajax({
+            url: '/api/asociar-bicicleta',
+            method: 'POST',
+            data: form.serialize() + '&_token={{ csrf_token() }}',
+            success: function(resp) {
+                if (resp.success) {
+                    $('#modalAsociarBicicleta').modal('hide'); // Cerrar modal de asociar bicicleta
+
+                    // Reabrir el modal de "Nuevo Acceso"
+                    var accessModal = new bootstrap.Modal(document.getElementById('addAccessModal'));
+                    accessModal.show();
+
+                    // Recargar bicicletas asociadas al usuario
+                    $('#visitor_rut').trigger('blur');
+                } else {
+                    alert(resp.message || 'No se pudo asociar la bicicleta');
+                }
+            },
+            error: function() {
+                alert('Error al asociar bicicleta');
             }
         });
     });
