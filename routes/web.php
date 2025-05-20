@@ -34,7 +34,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', fn() => view('auth.register'))->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
 
-    Route::get('/forgot-password', fn() => view('auth.forgot-password'))->name('password.request');
+    Route::get('/forgot-password', fn() => view('auth.passwords.email'))->name('password.request');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');

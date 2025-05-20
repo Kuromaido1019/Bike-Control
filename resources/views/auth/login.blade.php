@@ -67,9 +67,6 @@
                                             ¿Olvidaste tu contraseña?
                                         </a>
                                     </div>
-                                    <div class="text-center">
-                                        <a class="small" href="{{ route('register') }}">¡Crear una cuenta!</a>
-                                    </div>
                                 </form>
                             </div>
                         </div>
