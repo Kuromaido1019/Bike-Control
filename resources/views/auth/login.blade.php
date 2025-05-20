@@ -67,6 +67,11 @@
                                             ¿Olvidaste tu contraseña?
                                         </a>
                                     </div>
+                                    <div class="text-center mt-2">
+                                        <a class="small" href="{{ route('register') }}">
+                                            ¿No tienes cuenta? Regístrate
+                                        </a>
+                                    </div>
                                 </form>
                             </div>
                         </div>

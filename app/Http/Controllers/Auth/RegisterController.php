@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Notifications\WelcomeNotification;
 
 class RegisterController extends Controller
 {
@@ -50,8 +51,18 @@ class RegisterController extends Controller
     {
         return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
+            'rut' => ['required', 'string', 'max:20', 'unique:users'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'phone' => ['required', 'string', 'max:30'],
+            'birthdate' => ['required', 'date'],
+            'career' => ['required', 'string', 'max:100'],
+            'brand' => ['required', 'string', 'max:50'],
+            'model' => ['required', 'string', 'max:50'],
+            'color' => ['required', 'string', 'max:30'],
+        ], [
+            'rut.unique' => 'El RUT ya está registrado.',
+            'email.unique' => 'El correo ya está registrado.'
         ]);
     }
 
@@ -63,10 +74,25 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'role' => 'visitante',
+            'rut' => $data['rut'],
         ]);
+        $user->profile()->create([
+            'phone' => $data['phone'],
+            'birth_date' => $data['birthdate'],
+            'career' => $data['career'],
+        ]);
+        $user->bikes()->create([
+            'brand' => $data['brand'],
+            'model' => $data['model'],
+            'color' => $data['color'],
+        ]);
+        // Enviar correo de bienvenida
+        $user->notify(new WelcomeNotification());
+        return $user;
     }
 }

@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\Access;
 use App\Models\Bike;
 use App\Models\User;
+use App\Notifications\ResetPasswordNotification;
 
 class AccessController extends Controller
 {
@@ -98,6 +100,18 @@ class AccessController extends Controller
                 'phone' => $data['phone'],
             ]);
 
+            // Enviar correo para que el usuario cree su contraseña (antes de crear bicicleta y acceso)
+            $token = app('auth.password.broker')->createToken($user);
+            \Log::info('Intentando enviar notificación de restablecimiento de contraseña', ['user_id' => $user->id, 'email' => $user->email]);
+            try {
+                $user->notify(new \App\Notifications\ResetPasswordNotification($token));
+                \Log::info('Notificación de restablecimiento enviada correctamente', ['user_id' => $user->id, 'email' => $user->email]);
+            } catch (\Exception $e) {
+                \Log::error('Error al enviar notificación de restablecimiento', ['user_id' => $user->id, 'email' => $user->email, 'error' => $e->getMessage()]);
+                DB::rollBack();
+                return back()->withInput()->with('error', 'Error al enviar correo de restablecimiento: ' . $e->getMessage());
+            }
+
             // Crear bicicleta
             $bike = $user->bikes()->create([
                 'brand' => $data['bike_brand'],
@@ -114,7 +128,7 @@ class AccessController extends Controller
             ]);
 
             DB::commit();
-            return redirect()->route('guard.control-acceso')->with('success', 'Ingreso rápido registrado correctamente.');
+            return redirect()->route('guard.control-acceso')->with('success', 'Ingreso rápido registrado correctamente. Se ha enviado un correo al usuario para que cree su contraseña.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Error al registrar ingreso rápido: ' . $e->getMessage());
