@@ -19,8 +19,16 @@
                             <div class="text-center">
                                 <h1 class="h4 text-gray-900 mb-4">Reiniciar Contraseña</h1>
                                 <p class="mb-4">Ingresa tu correo electrónico para recibir un enlace de reinicio de contraseña.</p>
+                                @if (session('status'))
+                                    <div class="alert alert-success" role="alert">
+                                        {{ __(session('status')) }}
+                                    </div>
+                                    <script>
+                                        alert("{{ __(session('status')) }}");
+                                    </script>
+                                @endif
                             </div>
-                            <form method="POST" action="{{ route('password.email') }}">
+                            <form method="POST" action="{{ route('password.email') }}" id="resetPasswordForm">
                                 @csrf
 
                                 <!-- Campo Email -->
