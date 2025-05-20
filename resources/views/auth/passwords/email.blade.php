@@ -23,9 +23,6 @@
                                     <div class="alert alert-success" role="alert">
                                         {{ __(session('status')) }}
                                     </div>
-                                    <script>
-                                        alert("{{ __(session('status')) }}");
-                                    </script>
                                 @endif
                             </div>
                             <form method="POST" action="{{ route('password.email') }}" id="resetPasswordForm">
