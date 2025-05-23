@@ -44,7 +44,7 @@ Route::middleware('guest')->group(function () {
 // Rutas Protegidas (requieren login)
 //--------------------------------------------------------------------------
 Route::middleware('auth')->group(function () {
-    Route::get('/home', fn() => view('index'))->name('home');
+    Route::get('/home', [\App\Http\Controllers\DashboardController::class, 'index'])->name('home');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::resource('bikes', BikeController::class)->except(['destroy']);
     Route::post('/bicicletas', [BikeController::class, 'store'])->name('bike.store');
@@ -63,6 +63,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/control-acceso/quick/user', [\App\Http\Controllers\AccessController::class, 'quickUser'])->name('control-acceso.quick.user');
         Route::post('/control-acceso/quick/bike', [\App\Http\Controllers\AccessController::class, 'quickBike'])->name('control-acceso.quick.bike');
         Route::delete('/control-acceso/quick/cancel/{user}', [\App\Http\Controllers\AccessController::class, 'quickCancel']);
+
+        // Ruta para generación de reportes PDF desde el dashboard admin
+        Route::get('/report', [\App\Http\Controllers\DashboardController::class, 'report'])->name('report');
     });
 
     // Rutas para Guardias
