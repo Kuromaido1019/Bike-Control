@@ -29,6 +29,7 @@ class DashboardController extends Controller
         $totalBikes = null;
         $monthlyAccesses = null;
         $topUsers = collect();
+        $topUsersWeek = collect();
 
         if ($user->role === 'visitante') {
             $myAccesses = $user->accessesAsVisitor()->count();

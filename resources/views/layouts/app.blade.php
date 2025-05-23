@@ -26,6 +26,27 @@
         .sidebar-dark .sidebar-brand {
             height: 4.375rem;
         }
+        .admin-heading-custom {
+            font-size: 0.80rem;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+            max-width: 100%;
+            display: block;
+            word-break: break-word;
+            line-height: 1.2;
+            padding-right: 4px;
+            padding-left: 4px;
+        }
+        .sidebar.toggled .admin-heading-custom {
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            text-align: center;
+            padding: 0 2px;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+        }
     </style>
 
     @stack('styles')
@@ -73,6 +94,8 @@
     <!-- Scripts personalizados por página -->
     @stack('custom-scripts')
 
+    <!-- SB Admin 2 Sidebar Script -->
+    <script src="{{ asset('js/sb-admin-2.min.js') }}"></script>
 
     <!-- Inicialización de plugins -->
     <script>

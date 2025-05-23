@@ -23,7 +23,7 @@
     @auth
         @if(Auth::user()->role === 'admin')
         <!-- Opciones solo para admin -->
-        <div class="sidebar-heading">Administración</div>
+        <div class="sidebar-heading text-white admin-heading-custom">Gestión</div>
         <li class="nav-item {{ request()->is('admin/users*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('admin.users.index') }}">
                 <i class="fas fa-users-cog"></i>
@@ -34,12 +34,6 @@
             <a class="nav-link" href="{{ route('admin.control-acceso') }}">
                 <i class="fas fa-key"></i>
                 <span>Gestión de Accesos</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#">
-                <i class="fas fa-database"></i>
-                <span>Reportes Generales</span>
             </a>
         </li>
         <hr class="sidebar-divider">
