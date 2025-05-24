@@ -99,3 +99,103 @@
     </div>
 </div>
 @endsection
+
+@push('custom-scripts')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css"/>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    var accessTable = $('#accessTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+        },
+        order: [[0, 'desc']],
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50, 100]
+    });
+
+    // Delegación para abrir el modal y cargar datos de edición
+    $(document).on('click', '.btn-edit-access', function() {
+        var btn = $(this);
+        $('#editAccessForm').attr('action', '/admin/control-acceso/' + btn.data('id'));
+        $('#edit_entrance_time').val(btn.data('entrance_time'));
+        $('#edit_exit_time').val(btn.data('exit_time'));
+        $('#edit_observation').val(btn.data('observation'));
+    });
+
+    // Confirmación y feedback para editar
+    $('#editAccessForm').on('submit', function(e) {
+        e.preventDefault();
+        var form = this;
+        Swal.fire({
+            title: '¿Guardar cambios?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: form.action,
+                    method: 'POST',
+                    data: $(form).serialize(),
+                    success: function(response) {
+                        var modalEl = document.getElementById('editAccessModal');
+                        var myModal = bootstrap.Modal.getInstance(modalEl);
+                        if (!myModal) {
+                            myModal = new bootstrap.Modal(modalEl);
+                        }
+                        myModal.hide();
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Editado!',
+                            text: 'El acceso fue actualizado.'
+                        }).then(() => location.reload());
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'No se pudo editar el acceso.', 'error');
+                    }
+                });
+            }
+        });
+    });
+
+    // Confirmación y feedback para eliminar
+    $(document).on('submit', 'form[action*="control-acceso"]', function(e) {
+        if (!$(this).hasClass('form-delete-access')) return;
+        e.preventDefault();
+        var form = this;
+        Swal.fire({
+            title: '¿Deseas eliminar este acceso?',
+            text: 'Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: form.action,
+                    method: 'POST',
+                    data: $(form).serialize(),
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Eliminado!',
+                            text: 'El acceso fue removido.'
+                        }).then(() => location.reload());
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'No se pudo eliminar el acceso.', 'error');
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+@endpush

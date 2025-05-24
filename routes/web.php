@@ -9,12 +9,10 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\BikeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\BikeController as AdminBikeController;
 
 // Redirección inicial
 Route::redirect('/', '/login');
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::resource('users', UserController::class)->except(['create']);
-});
 
 // Endpoint para bicicletas por RUT (AJAX)
 Route::get('/api/bicicletas-por-rut/{rut}', [\App\Http\Controllers\AccessController::class, 'getBikesByRut']);
@@ -50,10 +48,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/bicicletas', [BikeController::class, 'store'])->name('bike.store');
     Route::delete('/bicicletas/{bike}', [BikeController::class, 'destroy'])->name('bike.destroy');
 
-    // Rutas para ADMIN - dejar abierta durante pruebas (sin 'can:isAdmin')
+    // Rutas para ADMIN
     Route::prefix('admin')->name('admin.')->group(function () {
+        Route::resource('users', UserController::class);
+        Route::resource('bikes', AdminBikeController::class);
+
         Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
-        Route::resource('users', UserController::class); // <- esto crea admin.users.index, etc.
 
         Route::get('/control-acceso', [\App\Http\Controllers\AccessController::class, 'index'])->name('control-acceso');
         Route::post('/control-acceso', [\App\Http\Controllers\AccessController::class, 'store'])->name('control-acceso.store');

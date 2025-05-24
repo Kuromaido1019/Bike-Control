@@ -36,6 +36,12 @@
                 <span>Gestión de Accesos</span>
             </a>
         </li>
+        <li class="nav-item {{ request()->is('admin/bikes*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('admin.bikes.index') }}">
+                <i class="fas fa-bicycle"></i>
+                <span>Gestión de Bicicletas</span>
+            </a>
+        </li>
         <hr class="sidebar-divider">
         @endif
 
