@@ -11,7 +11,7 @@
                     <!-- Image Section -->
                     <div class="col-lg-6 d-flex align-items-center justify-content-center bg-light">
                         <img class="img-fluid px-3 px-sm-4 mt-3 mb-4" style="width: 25rem;"
-                            src="{{ asset('img/undraw_forgot.svg') }}" alt="Imagen de seguridad">
+                            src="{{ asset('img/forgot-password.svg') }}" alt="Imagen de seguridad">
                     </div>
                     <!-- Form Section -->
                     <div class="col-lg-6">

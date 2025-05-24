@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Control de Acceso')
+
 @section('content')
 <div class="container py-4">
     <div class="row justify-content-center">

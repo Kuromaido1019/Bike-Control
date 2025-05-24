@@ -10,7 +10,7 @@
         <!-- Informacion y Funciones -->
         <li class="nav-item d-flex align-items-center">
             @if(Auth::check())
-                <img class="img-profile rounded-circle me-2" src="{{ asset('img/undraw_profile.svg') }}" style="width:32px; height:32px;">
+                <img class="img-profile rounded-circle me-2" src="{{ asset('img/profile-m.svg') }}" style="width:32px; height:32px;">
                 <span class="d-none d-lg-inline text-gray-600 small me-3">{{ Auth::user()->name }}</span>
                 <div class="vr mx-2 d-none d-lg-block" style="height:32px;"></div>
             @endif
