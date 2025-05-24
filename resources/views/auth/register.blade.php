@@ -21,23 +21,23 @@
                                     <div id="step-1" class="step">
                                         <h6 class="text-primary">1. Datos de usuario</h6>
                                         <div class="form-group mb-2">
-                                            <input type="text" class="form-control form-control-user" name="name" value="{{ old('name') }}" required placeholder="Nombre completo">
+                                            <input type="text" class="form-control form-control-user" name="name" value="{{ old('name') }}" required placeholder="Nombre completo" maxlength="255">
                                             @error('name')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="form-group mb-2">
-                                            <input type="text" class="form-control form-control-user" name="rut" value="{{ old('rut') }}" required placeholder="RUT">
+                                            <input type="text" class="form-control form-control-user" name="rut" value="{{ old('rut') }}" required placeholder="RUT" maxlength="20">
                                             @error('rut')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="form-group mb-2">
-                                            <input type="email" class="form-control form-control-user" name="email" value="{{ old('email') }}" required placeholder="Correo electrónico">
+                                            <input type="email" class="form-control form-control-user" name="email" value="{{ old('email') }}" required placeholder="Correo electrónico" maxlength="255">
                                             @error('email')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="form-group mb-2">
-                                            <input type="password" class="form-control form-control-user" name="password" required placeholder="Contraseña">
+                                            <input type="password" class="form-control form-control-user" name="password" required placeholder="Contraseña" maxlength="100">
                                             @error('password')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="form-group mb-2">
-                                            <input type="password" class="form-control form-control-user" name="password_confirmation" required placeholder="Confirmar contraseña">
+                                            <input type="password" class="form-control form-control-user" name="password_confirmation" required placeholder="Confirmar contraseña" maxlength="100">
                                         </div>
                                         <button type="button" class="btn btn-primary btn-user btn-block mt-3" onclick="nextStep(1)">Siguiente</button>
                                     </div>
@@ -45,7 +45,7 @@
                                     <div id="step-2" class="step d-none">
                                         <h6 class="text-primary">2. Perfil</h6>
                                         <div class="form-group mb-2">
-                                            <input type="text" class="form-control form-control-user" name="phone" value="{{ old('phone') }}" required placeholder="Teléfono">
+                                            <input type="text" class="form-control form-control-user" name="phone" value="{{ old('phone') }}" required placeholder="Teléfono" maxlength="30">
                                             @error('phone')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="form-group mb-2">
@@ -53,7 +53,7 @@
                                             @error('birthdate')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="form-group mb-2">
-                                            <input type="text" class="form-control form-control-user" name="career" value="{{ old('career') }}" required placeholder="Carrera">
+                                            <input type="text" class="form-control form-control-user" name="career" value="{{ old('career') }}" required placeholder="Carrera" maxlength="100">
                                             @error('career')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="d-flex justify-content-between mt-3">
@@ -65,20 +65,23 @@
                                     <div id="step-3" class="step d-none">
                                         <h6 class="text-primary">3. Bicicleta</h6>
                                         <div class="form-group mb-2">
-                                            <input type="text" class="form-control form-control-user" name="brand" value="{{ old('brand') }}" required placeholder="Marca">
+                                            <input type="text" class="form-control form-control-user" name="brand" value="{{ old('brand') }}" required placeholder="Marca" maxlength="50">
                                             @error('brand')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="form-group mb-2">
-                                            <input type="text" class="form-control form-control-user" name="model" value="{{ old('model') }}" required placeholder="Modelo">
+                                            <input type="text" class="form-control form-control-user" name="model" value="{{ old('model') }}" required placeholder="Modelo" maxlength="50">
                                             @error('model')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="form-group mb-4">
-                                            <input type="text" class="form-control form-control-user" name="color" value="{{ old('color') }}" required placeholder="Color">
+                                            <input type="text" class="form-control form-control-user" name="color" value="{{ old('color') }}" required placeholder="Color" maxlength="30">
                                             @error('color')<span class="text-danger">{{ $message }}</span>@enderror
                                         </div>
                                         <div class="d-flex justify-content-between">
                                             <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Atrás</button>
-                                            <button type="submit" class="btn btn-primary btn-user">Registrarse</button>
+                                            <button type="submit" class="btn btn-primary btn-user" id="registerBtn">
+                                                <span id="registerBtnText">Registrarse</span>
+                                                <span id="registerSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                            </button>
                                         </div>
                                     </div>
                                 </form>
@@ -269,6 +272,14 @@
             valid = false;
         }
         if (!valid) e.preventDefault();
+    });
+
+    $(document).ready(function() {
+        $('#registerForm').on('submit', function() {
+            $('#registerBtn').prop('disabled', true);
+            $('#registerBtnText').text('Registrando...');
+            $('#registerSpinner').removeClass('d-none');
+        });
     });
 </script>
 @endsection

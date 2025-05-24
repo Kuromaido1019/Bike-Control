@@ -32,7 +32,7 @@
                                 <div class="form-group">
                                     <input type="email" class="form-control form-control-user"
                                         name="email" id="email" value="{{ old('email') }}"
-                                        required autocomplete="email" autofocus
+                                        required autocomplete="email" autofocus maxlength="100"
                                         placeholder="Ingresa tu correo electrónico...">
                                     @error('email')
                                     <span class="text-danger">{{ $message }}</span>
@@ -40,8 +40,9 @@
                                 </div>
 
                                 <!-- Botón de submit -->
-                                <button type="submit" class="btn btn-primary btn-user btn-block">
-                                    Reiniciar Contraseña
+                                <button type="submit" class="btn btn-primary btn-user btn-block" id="resetBtn">
+                                    <span id="resetBtnText">Reiniciar Contraseña</span>
+                                    <span id="resetSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                 </button>
                             </form>
                             <div class="text-center mt-4">
@@ -54,4 +55,19 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resetForm = document.getElementById('resetPasswordForm');
+    const resetBtn = document.getElementById('resetBtn');
+    const resetBtnText = document.getElementById('resetBtnText');
+    const resetSpinner = document.getElementById('resetSpinner');
+    if (resetForm) {
+        resetForm.addEventListener('submit', function() {
+            resetBtn.disabled = true;
+            resetBtnText.textContent = 'Enviando...';
+            resetSpinner.classList.remove('d-none');
+        });
+    }
+});
+</script>
 @endsection

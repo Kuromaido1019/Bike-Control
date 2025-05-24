@@ -20,14 +20,14 @@
                                 <div class="text-center">
                                     <h1 class="h4 text-gray-900 mb-4">Bienvenido a Bike Control</h1>
                                 </div>
-                                <form method="POST" action="{{ route('login') }}">
+                                <form method="POST" action="{{ route('login') }}" id="loginForm">
                                     @csrf
 
                                     <!-- Campo Email -->
                                     <div class="form-group">
                                         <input type="email" class="form-control form-control-user"
                                             name="email" id="email" value="{{ old('email') }}"
-                                            required autocomplete="email" autofocus
+                                            required autocomplete="email" autofocus maxlength="100"
                                             placeholder="Ingresa tu correo electrónico...">
                                         @error('email')
                                         <span class="text-danger">{{ $message }}</span>
@@ -37,7 +37,8 @@
                                     <!-- Campo Contraseña -->
                                     <div class="form-group">
                                         <input type="password" class="form-control form-control-user"
-                                            name="password" id="password" required
+                                            name="password" id="password" required maxlength="100"
+                                            autocomplete="current-password"
                                             placeholder="Contraseña">
                                         @error('password')
                                         <span class="text-danger">{{ $message }}</span>
@@ -45,8 +46,9 @@
                                     </div>
 
                                     <!-- Botón de submit -->
-                                    <button type="submit" class="btn btn-primary btn-user btn-block">
-                                        Iniciar Sesión
+                                    <button type="submit" class="btn btn-primary btn-user btn-block" id="loginBtn">
+                                        <span id="loginBtnText">Iniciar Sesión</span>
+                                        <span id="loginSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                     </button>
 
                                     <!-- Enlaces adicionales -->
@@ -62,6 +64,21 @@
                                         </a>
                                     </div>
                                 </form>
+                                <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const loginForm = document.getElementById('loginForm');
+                                    const loginBtn = document.getElementById('loginBtn');
+                                    const loginBtnText = document.getElementById('loginBtnText');
+                                    const loginSpinner = document.getElementById('loginSpinner');
+                                    if (loginForm) {
+                                        loginForm.addEventListener('submit', function() {
+                                            loginBtn.disabled = true;
+                                            loginBtnText.textContent = 'Validando...';
+                                            loginSpinner.classList.remove('d-none');
+                                        });
+                                    }
+                                });
+                                </script>
                             </div>
                         </div>
                     </div>
