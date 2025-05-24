@@ -155,6 +155,22 @@
         return /^\d{8}$/.test(phone);
     }
 
+    function validarPasswordCompleja(password) {
+        // Al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(password);
+    }
+
+    function validarFechaNacimiento(fecha) {
+        if (!fecha) return false;
+        const hoy = new Date();
+        const nacimiento = new Date(fecha);
+        return nacimiento < hoy;
+    }
+
+    function telefonoNoTrivial(phone) {
+        return !(/^0+$/.test(phone) || /^(\d)\1+$/.test(phone));
+    }
+
     function showError(input, message) {
         $(input).addClass('is-invalid');
         if (!$(input).next('.text-danger').length) {
@@ -196,6 +212,9 @@
             if (!password.val()) {
                 showError(password, 'La contraseña es obligatoria');
                 valid = false;
+            } else if (!validarPasswordCompleja(password.val())) {
+                showError(password, 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.');
+                valid = false;
             }
             if (!password_confirmation.val()) {
                 showError(password_confirmation, 'Debes confirmar la contraseña');
@@ -215,9 +234,15 @@
             } else if (!validarTelefono(phone.val())) {
                 showError(phone, 'El teléfono debe tener 8 dígitos');
                 valid = false;
+            } else if (!telefonoNoTrivial(phone.val())) {
+                showError(phone, 'El teléfono no puede ser trivial');
+                valid = false;
             }
             if (!birthdate.val()) {
                 showError(birthdate, 'La fecha de nacimiento es obligatoria');
+                valid = false;
+            } else if (!validarFechaNacimiento(birthdate.val())) {
+                showError(birthdate, 'La fecha de nacimiento no puede ser futura');
                 valid = false;
             }
             if (!career.val()) {
@@ -258,6 +283,8 @@
         var rut = $("input[name='rut']");
         var email = $("input[name='email']");
         var phone = $("input[name='phone']");
+        var birthdate = $("input[name='birthdate']");
+        var password = $("input[name='password']");
         var valid = true;
         if (!validarRut(rut.val())) {
             showError(rut, 'RUT chileno inválido');
@@ -270,16 +297,19 @@
         if (!validarTelefono(phone.val())) {
             showError(phone, 'El teléfono debe tener 8 dígitos');
             valid = false;
+        } else if (!telefonoNoTrivial(phone.val())) {
+            showError(phone, 'El teléfono no puede ser trivial');
+            valid = false;
+        }
+        if (!validarFechaNacimiento(birthdate.val())) {
+            showError(birthdate, 'La fecha de nacimiento no puede ser futura');
+            valid = false;
+        }
+        if (!validarPasswordCompleja(password.val())) {
+            showError(password, 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.');
+            valid = false;
         }
         if (!valid) e.preventDefault();
-    });
-
-    $(document).ready(function() {
-        $('#registerForm').on('submit', function() {
-            $('#registerBtn').prop('disabled', true);
-            $('#registerBtnText').text('Registrando...');
-            $('#registerSpinner').removeClass('d-none');
-        });
     });
 </script>
 @endsection

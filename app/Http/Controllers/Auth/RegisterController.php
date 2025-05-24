@@ -53,16 +53,36 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'rut' => ['required', 'string', 'max:20', 'unique:users'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'phone' => ['required', 'string', 'max:30'],
-            'birthdate' => ['required', 'date'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'max:100',
+                'confirmed',
+                "regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$%\^&\*()_+\-=\[\]{};':\\\"\\|,.<>\/?]).{8,}$/"
+            ],
+            'phone' => [
+                'required',
+                'string',
+                'max:30',
+                'not_regex:/^0+$/',
+                'not_regex:/^(\d)\1+$/',
+            ],
+            'birthdate' => [
+                'required',
+                'date',
+                'before:today',
+            ],
             'career' => ['required', 'string', 'max:100'],
             'brand' => ['required', 'string', 'max:50'],
             'model' => ['required', 'string', 'max:50'],
             'color' => ['required', 'string', 'max:30'],
         ], [
             'rut.unique' => 'El RUT ya está registrado.',
-            'email.unique' => 'El correo ya está registrado.'
+            'email.unique' => 'El correo ya está registrado.',
+            'password.regex' => 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.',
+            'phone.not_regex' => 'El teléfono no puede ser trivial (todos ceros o todos iguales).',
+            'birthdate.before' => 'La fecha de nacimiento no puede ser futura.'
         ]);
     }
 

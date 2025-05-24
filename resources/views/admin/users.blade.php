@@ -141,7 +141,12 @@
 
                     <div class="mb-3" id="passwordField">
                         <label for="password" class="form-label">Contraseña</label>
-                        <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required>
+                        <div class="input-group">
+                            <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" tabindex="-1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                 </div>
@@ -224,25 +229,53 @@
 
         // Validar el formulario antes de enviarlo
         $('#userForm').submit(function(e) {
+            // Validación de RUT chileno
+            let rut = $('#rut').val();
+            let rutRegex = /^\d{7,8}-[\dkK]$/;
+            if (!rutRegex.test(rut) || !validateChileanRut(rut)) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'El RUT no es válido. Debe tener formato 12345678-9 y dígito verificador correcto.',
+                    confirmButtonText: 'Aceptar'
+                });
+                $('#rut').focus();
+                return false;
+            }
             // Solo validar password si el campo está visible (es creación)
             if ($('#passwordField').is(':visible')) {
                 let password = $('#password').val();
-                if (password.length < 6) {
-                    e.preventDefault(); // Cancelar el envío
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'La contraseña debe tener al menos 6 caracteres.',
-                            confirmButtonText: 'Aceptar'
-                        });
-                    } else {
-                        alert('La contraseña debe tener al menos 6 caracteres.');
-                    }
+                // Permitir símbolos comunes incluyendo guion bajo
+                let pwRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&_\-.,;:!"'\\/\[\]{}()=+<>|~`^%$#]).{8,}$/;
+                if (!pwRegex.test(password)) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'La contraseña debe tener al menos 8 caracteres, incluir mayúscula, minúscula, número y símbolo.',
+                        confirmButtonText: 'Aceptar'
+                    });
                     $('#password').focus();
+                    return false;
                 }
             }
         });
+
+        // Validación de RUT chileno (dígito verificador)
+        function validateChileanRut(rut) {
+            rut = rut.replace(/\./g, '').replace(/-/g, '');
+            let body = rut.slice(0, -1);
+            let dv = rut.slice(-1).toUpperCase();
+            let suma = 0, multiplo = 2;
+            for (let i = body.length - 1; i >= 0; i--) {
+                suma += parseInt(body.charAt(i)) * multiplo;
+                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            }
+            let dvEsperado = 11 - (suma % 11);
+            dvEsperado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
+            return dv === dvEsperado;
+        }
 
         // Confirmación con SweetAlert para eliminar usuario
         $(document).on('submit', '.form-delete-user', function(e) {
@@ -263,15 +296,24 @@
                 }
             });
         });
+
+        // Mostrar/ocultar contraseña
+        $('#togglePassword').on('click', function() {
+            const passwordInput = $('#password');
+            const icon = $(this).find('i');
+            if (passwordInput.attr('type') === 'password') {
+                passwordInput.attr('type', 'text');
+                icon.removeClass('fa-eye').addClass('fa-eye-slash');
+            } else {
+                passwordInput.attr('type', 'password');
+                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+            }
+        });
     });
-</script>
-<script>
-$(document).ready(function() {
+
     @if ($errors->any())
         var myModal = new bootstrap.Modal(document.getElementById('userModal'));
         myModal.show();
     @endif
-});
 </script>
-
 @endpush

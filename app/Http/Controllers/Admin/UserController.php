@@ -18,21 +18,42 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        // Validar datos de entrada
+        // Validar datos de entrada con formato de RUT y fuerza de contraseña
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'rut' => 'required|string|max:20|unique:users,rut',
+            'rut' => [
+                'required',
+                'string',
+                'max:20',
+                'unique:users,rut',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^\d{7,8}-[\dkK]$/', $value) || !$this->validateChileanRut($value)) {
+                        $fail('El RUT no es válido. Debe tener formato 12345678-9.');
+                    }
+                }
+            ],
             'role' => 'required|in:admin,guardia,visitante',
-            'password' => 'required|string|min:6',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/[A-Z]/', // al menos una mayúscula
+                'regex:/[a-z]/', // al menos una minúscula
+                'regex:/[0-9]/', // al menos un número
+                // al menos un símbolo, incluyendo _
+                "regex:/[ @$!%*#?&_\-.,;:!\"'\\/\[\]{}()=+<>|~`^%$#]/",
+            ],
+        ], [
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.regex' => 'La contraseña debe incluir mayúscula, minúscula, número y símbolo.',
+            'rut.unique' => 'El RUT ya está registrado.',
+            'rut.required' => 'El RUT es obligatorio.',
+            'rut.max' => 'El RUT no puede tener más de 20 caracteres.',
         ]);
 
-        // Encriptar la contraseña
         $data['password'] = bcrypt($data['password']);
-
-        // Crear usuario
         User::create($data);
-
         return redirect()->route('admin.users.index')->with('success', 'Usuario creado correctamente.');
     }
 
@@ -46,8 +67,22 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'rut' => 'required|string|max:20|unique:users,rut,' . $user->id,
+            'rut' => [
+                'required',
+                'string',
+                'max:20',
+                'unique:users,rut,' . $user->id,
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^\d{7,8}-[\dkK]$/', $value) || !$this->validateChileanRut($value)) {
+                        $fail('El RUT no es válido. Debe tener formato 12345678-9.');
+                    }
+                }
+            ],
             'role' => 'required|in:admin,guardia,visitante',
+        ], [
+            'rut.unique' => 'El RUT ya está registrado.',
+            'rut.required' => 'El RUT es obligatorio.',
+            'rut.max' => 'El RUT no puede tener más de 20 caracteres.',
         ]);
 
         $user->update([
@@ -56,7 +91,6 @@ class UserController extends Controller
             'rut' => $request->rut,
             'role' => $request->role,
         ]);
-
         return redirect()->route('admin.users.index')->with('success', 'Usuario actualizado correctamente.');
     }
 
@@ -74,5 +108,27 @@ class UserController extends Controller
             // Para otros errores, lanza la excepción para no ocultar errores inesperados
             throw $e;
         }
+    }
+
+    /**
+     * Valida el formato y dígito verificador de un RUT chileno.
+     */
+    private function validateChileanRut($rut)
+    {
+        $rut = preg_replace('/[^\dkK]/', '', str_replace('-', '', $rut));
+        $body = substr($rut, 0, -1);
+        $dv = strtoupper(substr($rut, -1));
+        $suma = 0;
+        $multiplo = 2;
+        for ($i = strlen($body) - 1; $i >= 0; $i--) {
+            $suma += $body[$i] * $multiplo;
+            $multiplo = $multiplo < 7 ? $multiplo + 1 : 2;
+        }
+        $resto = $suma % 11;
+        $dvEsperado = 11 - $resto;
+        if ($dvEsperado == 11) $dvEsperado = '0';
+        elseif ($dvEsperado == 10) $dvEsperado = 'K';
+        else $dvEsperado = (string)$dvEsperado;
+        return $dv == $dvEsperado;
     }
 }

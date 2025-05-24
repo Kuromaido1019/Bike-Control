@@ -55,19 +55,4 @@
         </div>
     </div>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const resetForm = document.getElementById('resetPasswordForm');
-    const resetBtn = document.getElementById('resetBtn');
-    const resetBtnText = document.getElementById('resetBtnText');
-    const resetSpinner = document.getElementById('resetSpinner');
-    if (resetForm) {
-        resetForm.addEventListener('submit', function() {
-            resetBtn.disabled = true;
-            resetBtnText.textContent = 'Enviando...';
-            resetSpinner.classList.remove('d-none');
-        });
-    }
-});
-</script>
 @endsection
