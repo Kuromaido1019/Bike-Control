@@ -6,6 +6,9 @@
 <!-- Page Heading -->
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Gestión de Bicicletas</h1>
+    <a href="{{ request()->query('all') ? route('admin.bikes.index') : route('admin.bikes.index', ['all' => 1]) }}" class="btn btn-secondary btn-sm">
+        {{ request()->query('all') ? 'Ver solo activas' : 'Ver todas' }}
+    </a>
 </div>
 
 <!-- Modal Editar Bicicleta -->
@@ -59,6 +62,7 @@
                         <th>Modelo</th>
                         <th>Color</th>
                         <th>Usuario</th>
+                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -71,24 +75,40 @@
                             <td>{{ $bike->color }}</td>
                             <td>{{ $bike->user ? $bike->user->name : '-' }}</td>
                             <td>
-                                <button class="btn btn-sm btn-primary btn-edit-bike"
-                                    data-id="{{ $bike->id }}"
-                                    data-brand="{{ $bike->brand }}"
-                                    data-model="{{ $bike->model }}"
-                                    data-color="{{ $bike->color }}"
-                                    data-bs-toggle="modal" data-bs-target="#editBikeModal">
-                                    Editar
-                                </button>
-                                <form action="{{ route('admin.bikes.destroy', $bike->id) }}" method="POST" style="display:inline-block;" class="form-delete-bike">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
-                                </form>
+                                <span class="badge {{ $bike->estado == 'activo' ? 'bg-success' : 'bg-secondary' }}">
+                                    {{ ucfirst($bike->estado) }}
+                                </span>
+                            </td>
+                            <td>
+                                @if($bike->estado === 'activo')
+                                    <button class="btn btn-sm btn-primary btn-edit-bike"
+                                        data-id="{{ $bike->id }}"
+                                        data-brand="{{ $bike->brand }}"
+                                        data-model="{{ $bike->model }}"
+                                        data-color="{{ $bike->color }}"
+                                        data-bs-toggle="modal" data-bs-target="#editBikeModal">
+                                        Editar
+                                    </button>
+                                    <form action="{{ route('admin.bikes.inactivate', $bike->id) }}" method="POST" style="display:inline-block;" class="form-inactivate-bike">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-warning">Inactivar</button>
+                                    </form>
+                                    <form action="{{ route('admin.bikes.destroy', $bike->id) }}" method="POST" style="display:inline-block;" class="form-delete-bike">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('admin.bikes.activate', $bike->id) }}" method="POST" style="display:inline-block;" class="form-activate-bike">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success">Activar</button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center">No hay bicicletas registradas.</td>
+                            <td colspan="7" class="text-center">No hay bicicletas registradas.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -107,7 +127,7 @@
 $(document).ready(function() {
     var bikesTable = $('#bikesTable').DataTable({
         language: {
-            url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+            url: '/js/Spanish.json'
         },
         order: [[0, 'desc']],
         pageLength: 10,
@@ -193,6 +213,67 @@ $(document).ready(function() {
                     },
                     error: function() {
                         Swal.fire('Error', 'No se pudo eliminar la bicicleta.', 'error');
+                    }
+                });
+            }
+        });
+    });
+
+    // Confirmación y feedback para activar
+    $(document).on('submit', '.form-activate-bike', function(e) {
+        e.preventDefault();
+        var form = this;
+        Swal.fire({
+            title: '¿Deseas activar esta bicicleta?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, activar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: form.action,
+                    method: 'POST',
+                    data: $(form).serialize(),
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Activada!',
+                            text: 'La bicicleta fue activada.'
+                        }).then(() => location.reload());
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'No se pudo activar la bicicleta.', 'error');
+                    }
+                });
+            }
+        });
+    });
+    // Confirmación y feedback para inactivar
+    $(document).on('submit', '.form-inactivate-bike', function(e) {
+        e.preventDefault();
+        var form = this;
+        Swal.fire({
+            title: '¿Deseas inactivar esta bicicleta?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, inactivar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: form.action,
+                    method: 'POST',
+                    data: $(form).serialize(),
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Inactivada!',
+                            text: 'La bicicleta fue inactivada.'
+                        }).then(() => location.reload());
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'No se pudo inactivar la bicicleta.', 'error');
                     }
                 });
             }

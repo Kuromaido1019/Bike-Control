@@ -41,7 +41,7 @@
                                     <td>{{ $access->exit_time ? \Carbon\Carbon::parse($access->exit_time)->format('H:i') : '-' }}</td>
                                     <td>{{ $access->observation ?? '-' }}</td>
                                     <td>
-                                        <button class="btn btn-info btn-sm btn-edit-access"
+                                        <button class="btn btn-primary btn-sm btn-edit-access"
                                             data-id="{{ $access->id }}"
                                             data-user_id="{{ $access->user_id }}"
                                             data-guard_id="{{ $access->guard_id }}"
@@ -115,7 +115,7 @@
 $(document).ready(function() {
     var accessTable = $('#accessTable').DataTable({
         language: {
-            url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+            url: '/js/Spanish.json'
         },
         order: [[0, 'desc']],
         pageLength: 10,
@@ -126,9 +126,50 @@ $(document).ready(function() {
     $(document).on('click', '.btn-edit-access', function() {
         var btn = $(this);
         $('#editAccessForm').attr('action', '/admin/control-acceso/' + btn.data('id'));
-        $('#edit_entrance_time').val(btn.data('entrance_time'));
-        $('#edit_exit_time').val(btn.data('exit_time'));
-        $('#edit_observation').val(btn.data('observation'));
+        // DEBUG: Mostrar los valores en consola
+        console.log('entrance_time:', btn.data('entrance_time'));
+        console.log('exit_time:', btn.data('exit_time'));
+        console.log('observation:', btn.data('observation'));
+        // Si la hora viene como fecha completa, extraer HH:mm
+        let entrada = btn.data('entrance_time');
+        let horaEntrada = '';
+        if (entrada && entrada !== 'null' && entrada !== 'undefined' && entrada !== '-') {
+            if (entrada.length >= 16 && entrada.includes(':')) {
+                // Formato tipo '2025-05-20 18:48:24'
+                horaEntrada = entrada.substring(11,16);
+            } else if (entrada.length >= 5) {
+                horaEntrada = entrada.substring(0,5);
+            }
+        }
+        $('#edit_entrance_time').val(horaEntrada);
+        let salida = btn.data('exit_time');
+        let horaSalida = '';
+        if (salida && salida !== 'null' && salida !== 'undefined' && salida !== '-') {
+            if (salida.length >= 16 && salida.includes(':')) {
+                horaSalida = salida.substring(11,16);
+            } else if (salida.length >= 5) {
+                horaSalida = salida.substring(0,5);
+            }
+        }
+        $('#edit_exit_time').val(horaSalida);
+        let obs = btn.data('observation');
+        $('#edit_observation').val((obs && obs !== 'null' && obs !== 'undefined' && obs !== '-') ? obs : '');
+        // Asegura que los campos ocultos requeridos por el backend estén presentes
+        if ($('#editAccessForm input[name="user_id"]').length === 0) {
+            $('#editAccessForm').append('<input type="hidden" name="user_id" value="'+btn.data('user_id')+'">');
+        } else {
+            $('#editAccessForm input[name="user_id"]').val(btn.data('user_id'));
+        }
+        if ($('#editAccessForm input[name="guard_id"]').length === 0) {
+            $('#editAccessForm').append('<input type="hidden" name="guard_id" value="'+btn.data('guard_id')+'">');
+        } else {
+            $('#editAccessForm input[name="guard_id"]').val(btn.data('guard_id'));
+        }
+        if ($('#editAccessForm input[name="bike_id"]').length === 0) {
+            $('#editAccessForm').append('<input type="hidden" name="bike_id" value="'+btn.data('bike_id')+'">');
+        } else {
+            $('#editAccessForm input[name="bike_id"]').val(btn.data('bike_id'));
+        }
     });
 
     // Confirmación y feedback para editar
@@ -166,6 +207,50 @@ $(document).ready(function() {
                 });
             }
         });
+    });
+
+    // Validación antes de enviar el formulario de edición de acceso
+    $('#editAccessForm').on('submit', function(e) {
+        // Validar hora de entrada (requerida y formato HH:mm)
+        let entrada = $('#edit_entrance_time').val();
+        let horaRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+        if (!entrada || !horaRegex.test(entrada)) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'La hora de entrada es obligatoria y debe tener formato HH:mm.',
+                confirmButtonText: 'Aceptar'
+            });
+            $('#edit_entrance_time').focus();
+            return false;
+        }
+        // Validar hora de salida (si existe, debe tener formato HH:mm)
+        let salida = $('#edit_exit_time').val();
+        if (salida && !horaRegex.test(salida)) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'La hora de salida debe tener formato HH:mm.',
+                confirmButtonText: 'Aceptar'
+            });
+            $('#edit_exit_time').focus();
+            return false;
+        }
+        // Validar observación (máximo 255 caracteres)
+        let obs = $('#edit_observation').val();
+        if (obs && obs.length > 255) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'La observación no puede superar los 255 caracteres.',
+                confirmButtonText: 'Aceptar'
+            });
+            $('#edit_observation').focus();
+            return false;
+        }
     });
 
     // Confirmación y feedback para eliminar

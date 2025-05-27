@@ -45,42 +45,58 @@
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>Rol</th>
+                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($users as $user)
-                    <tr>
-                        <td>{{ $user->id }}</td>
-                        <td>{{ $user->rut }}</td>
-                        <td>{{ $user->name }}</td>
-                        <td>{{ $user->email }}</td>
-                        <td>{{ ucfirst($user->role) }}</td>
-                        <td>
-                            <button
-                                class="btn btn-sm btn-info btn-edit"
-                                data-id="{{ $user->id }}"
-                                data-rut="{{ $user->rut }}"
-                                data-name="{{ $user->name }}"
-                                data-email="{{ $user->email }}"
-                                data-role="{{ $user->role }}">
-                                Editar
-                            </button>
-
-                            <form
-                                action="{{ route('admin.users.destroy', $user->id) }}"
-                                method="POST"
-                                style="display:inline-block;" class="form-delete-user">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="btn btn-sm btn-danger">
-                                    Eliminar
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td>{{ $user->id }}</td>
+                            <td>{{ $user->rut }}</td>
+                            <td>{{ $user->name }}</td>
+                            <td>{{ $user->email }}</td>
+                            <td>{{ ucfirst($user->role) }}</td>
+                            <td>
+                                <span class="badge {{ $user->estado == 'activo' ? 'bg-success' : 'bg-secondary' }}">
+                                    {{ ucfirst($user->estado) }}
+                                </span>
+                            </td>
+                            <td>
+                                @if($user->estado === 'activo')
+                                    <button
+                                        class="btn btn-sm btn-primary btn-edit"
+                                        data-id="{{ $user->id }}"
+                                        data-rut="{{ $user->rut }}"
+                                        data-name="{{ $user->name }}"
+                                        data-email="{{ $user->email }}"
+                                        data-role="{{ $user->role }}">
+                                        Editar
+                                    </button>
+                                    <form action="{{ route('admin.users.inactivate', $user->id) }}" method="POST" style="display:inline-block;" class="form-inactivate-user">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-warning">Inactivar</button>
+                                    </form>
+                                    <form
+                                        action="{{ route('admin.users.destroy', $user->id) }}"
+                                        method="POST"
+                                        style="display:inline-block;" class="form-delete-user">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-danger">
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('admin.users.activate', $user->id) }}" method="POST" style="display:inline-block;" class="form-activate-user">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success">Activar</button>
+                                    </form>
+                                @endif
+                            </td>
+                        </tr>
                     @endforeach
                 </tbody>
             </table>
@@ -163,157 +179,118 @@
 @endsection
 
 @push('custom-scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css"/>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#usersTable').DataTable({
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
-            }
-        });
+$(document).ready(function() {
+    var usersTable = $('#usersTable').DataTable({
+        language: {
+            url: '/js/Spanish.json'
+        },
+        order: [[0, 'desc']],
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50, 100]
+    });
 
-        // Al abrir el modal para agregar, limpiar el método PUT si existe
-        $('#btnAddUser').click(function() {
-            $('#userModalLabel').text('Agregar Nuevo Usuario');
-            $('#submitButton').text('Guardar');
-            $('#userForm').attr('action', "{{ route('admin.users.store') }}");
-            $('#_method').val('POST');
-            $('#passwordField').show();
-            $('#password').prop('required', true).val('');
-            $('#user_id').val('');
-            $('#name').val('');
-            $('#email').val('');
-            $('#rut').val('');
-            $('#role').val('admin');
-        });
-
-        // Delegación para que funcione con DataTables
-        $(document).on('click', '.btn-edit', function() {
-            console.log('Botón editar presionado');
-            var id = $(this).data('id');
-            var rut = $(this).data('rut');
-            var name = $(this).data('name');
-            var email = $(this).data('email');
-            var role = $(this).data('role');
-
-            $('#userModalLabel').text('Editar Usuario');
-            $('#submitButton').text('Actualizar');
-            $('#userForm').attr('action', '/admin/users/' + id);
-            $('#_method').val('PUT');
-            $('#user_id').val(id);
-            $('#name').val(name);
-            $('#email').val(email);
-            $('#rut').val(rut);
-            $('#role').val(role);
-            $('#passwordField').hide();
-            $('#password').prop('required', false).val('');
-
-            // Solución Bootstrap 5: Si el modal ya está instanciado, reutilízalo
-            var modalEl = document.getElementById('userModal');
-            var myModal = bootstrap.Modal.getInstance(modalEl);
-            if (!myModal) {
-                myModal = new bootstrap.Modal(modalEl);
-            }
-            myModal.show();
-        });
-
-        // Al cerrar el modal, restablecer el formulario
-        $('#userModal').on('hidden.bs.modal', function() {
-            $('#userForm').trigger('reset');
-            $('#_method').val('POST');
-            $('#userForm').attr('action', "{{ route('admin.users.store') }}");
-            $('#userModalLabel').text('Agregar Nuevo Usuario');
-            $('#submitButton').text('Guardar');
-            $('#passwordField').show();
-            $('#password').prop('required', true).val('');
-        });
-
-        // Validar el formulario antes de enviarlo
-        $('#userForm').submit(function(e) {
-            // Validación de RUT chileno
-            let rut = $('#rut').val();
-            let rutRegex = /^\d{7,8}-[\dkK]$/;
-            if (!rutRegex.test(rut) || !validateChileanRut(rut)) {
-                e.preventDefault();
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'El RUT no es válido. Debe tener formato 12345678-9 y dígito verificador correcto.',
-                    confirmButtonText: 'Aceptar'
-                });
-                $('#rut').focus();
-                return false;
-            }
-            // Solo validar password si el campo está visible (es creación)
-            if ($('#passwordField').is(':visible')) {
-                let password = $('#password').val();
-                // Permitir símbolos comunes incluyendo guion bajo
-                let pwRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&_\-.,;:!"'\\/\[\]{}()=+<>|~`^%$#]).{8,}$/;
-                if (!pwRegex.test(password)) {
-                    e.preventDefault();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'La contraseña debe tener al menos 8 caracteres, incluir mayúscula, minúscula, número y símbolo.',
-                        confirmButtonText: 'Aceptar'
-                    });
-                    $('#password').focus();
-                    return false;
-                }
-            }
-        });
-
-        // Validación de RUT chileno (dígito verificador)
-        function validateChileanRut(rut) {
-            rut = rut.replace(/\./g, '').replace(/-/g, '');
-            let body = rut.slice(0, -1);
-            let dv = rut.slice(-1).toUpperCase();
-            let suma = 0, multiplo = 2;
-            for (let i = body.length - 1; i >= 0; i--) {
-                suma += parseInt(body.charAt(i)) * multiplo;
-                multiplo = multiplo < 7 ? multiplo + 1 : 2;
-            }
-            let dvEsperado = 11 - (suma % 11);
-            dvEsperado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : dvEsperado.toString();
-            return dv === dvEsperado;
+    // Botón editar usuario: abrir modal y cargar datos
+    $(document).on('click', '.btn-edit', function() {
+        var id = $(this).data('id');
+        var rut = $(this).data('rut');
+        var name = $(this).data('name');
+        var email = $(this).data('email');
+        var role = $(this).data('role');
+        $('#userModalLabel').text('Editar Usuario');
+        $('#submitButton').text('Actualizar');
+        $('#userForm').attr('action', '/admin/users/' + id);
+        $('#_method').val('PUT');
+        $('#user_id').val(id);
+        $('#name').val(name);
+        $('#email').val(email);
+        $('#rut').val(rut);
+        $('#role').val(role);
+        $('#passwordField').hide();
+        $('#password').prop('required', false).val('');
+        var modalEl = document.getElementById('userModal');
+        var myModal = bootstrap.Modal.getInstance(modalEl);
+        if (!myModal) {
+            myModal = new bootstrap.Modal(modalEl);
         }
+        myModal.show();
+    });
 
-        // Confirmación con SweetAlert para eliminar usuario
-        $(document).on('submit', '.form-delete-user', function(e) {
-            e.preventDefault();
-            var form = this;
-            Swal.fire({
-                title: '¿Deseas eliminar este usuario?',
-                text: 'Esta acción no se puede deshacer.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
-            });
-        });
+    // Al cerrar el modal, restaurar formulario a modo creación
+    $('#userModal').on('hidden.bs.modal', function() {
+        $('#userForm').trigger('reset');
+        $('#_method').val('POST');
+        $('#userForm').attr('action', "{{ route('admin.users.store') }}");
+        $('#userModalLabel').text('Agregar Nuevo Usuario');
+        $('#submitButton').text('Guardar');
+        $('#passwordField').show();
+        $('#password').prop('required', true).val('');
+    });
 
-        // Mostrar/ocultar contraseña
-        $('#togglePassword').on('click', function() {
-            const passwordInput = $('#password');
-            const icon = $(this).find('i');
-            if (passwordInput.attr('type') === 'password') {
-                passwordInput.attr('type', 'text');
-                icon.removeClass('fa-eye').addClass('fa-eye-slash');
-            } else {
-                passwordInput.attr('type', 'password');
-                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+    // Confirmación y feedback para activar usuario
+    $(document).on('submit', '.form-activate-user', function(e) {
+        e.preventDefault();
+        var form = this;
+        Swal.fire({
+            title: '¿Deseas activar este usuario?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, activar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: form.action,
+                    method: 'POST',
+                    data: $(form).serialize(),
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Activado!',
+                            text: 'El usuario fue activado.'
+                        }).then(() => location.reload());
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'No se pudo activar el usuario.', 'error');
+                    }
+                });
             }
         });
     });
-
-    @if ($errors->any())
-        var myModal = new bootstrap.Modal(document.getElementById('userModal'));
-        myModal.show();
-    @endif
+    // Confirmación y feedback para inactivar usuario
+    $(document).on('submit', '.form-inactivate-user', function(e) {
+        e.preventDefault();
+        var form = this;
+        Swal.fire({
+            title: '¿Deseas inactivar este usuario?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, inactivar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: form.action,
+                    method: 'POST',
+                    data: $(form).serialize(),
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Inactivado!',
+                            text: 'El usuario fue inactivado.'
+                        }).then(() => location.reload());
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'No se pudo inactivar el usuario.', 'error');
+                    }
+                });
+            }
+        });
+    });
+});
 </script>
 @endpush

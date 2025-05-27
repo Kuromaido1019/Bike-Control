@@ -97,17 +97,30 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         try {
-            $user->delete();
-            return redirect()->route('admin.users.index')->with('success', 'Usuario eliminado correctamente.');
+            $user->estado = 'inactivo';
+            $user->save();
+            return redirect()->route('admin.users.index')->with('success', 'Usuario marcado como inactivo correctamente.');
         } catch (QueryException $e) {
-            // Código SQL para violación de restricción de clave foránea en MySQL es 1451
             if ($e->getCode() == '23000' || strpos($e->getMessage(), '1451') !== false) {
                 return redirect()->route('admin.users.index')
                     ->with('error', 'No se puede eliminar el usuario porque tiene registros asociados en el sistema.');
             }
-            // Para otros errores, lanza la excepción para no ocultar errores inesperados
             throw $e;
         }
+    }
+
+    public function activate(User $user)
+    {
+        $user->estado = 'activo';
+        $user->save();
+        return redirect()->route('admin.users.index')->with('success', 'Usuario activado correctamente.');
+    }
+
+    public function inactivate(User $user)
+    {
+        $user->estado = 'inactivo';
+        $user->save();
+        return redirect()->route('admin.users.index')->with('success', 'Usuario inactivado correctamente.');
     }
 
     /**

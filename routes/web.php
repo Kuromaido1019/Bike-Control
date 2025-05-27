@@ -66,6 +66,11 @@ Route::middleware('auth')->group(function () {
 
         // Ruta para generación de reportes PDF desde el dashboard admin
         Route::get('/report', [\App\Http\Controllers\DashboardController::class, 'report'])->name('report');
+
+        Route::post('users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');
+        Route::post('users/{user}/inactivate', [UserController::class, 'inactivate'])->name('users.inactivate');
+        Route::post('bikes/{bike}/activate', [AdminBikeController::class, 'activate'])->name('bikes.activate');
+        Route::post('bikes/{bike}/inactivate', [AdminBikeController::class, 'inactivate'])->name('bikes.inactivate');
     });
 
     // Rutas para Guardias

@@ -9,6 +9,7 @@ use App\Models\Access;
 use App\Models\Bike;
 use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
+use App\Models\AccessModification;
 
 class AccessController extends Controller
 {
@@ -42,24 +43,91 @@ class AccessController extends Controller
 
     public function update(Request $request, Access $access)
     {
-        if ($request->has('mark_exit')) {
-            // Asegurarse de que solo se actualice el campo `exit_time`
-            $access->update(['exit_time' => now()->format('Y-m-d H:i:s')]);
-            return redirect()->route('guard.control-acceso')->with('success', 'Hora de salida registrada correctamente.');
-        }
-
-        $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'guard_id' => 'required|exists:users,id',
-            'bike_id' => 'nullable|exists:bikes,id',
-            'entrance_time' => 'required',
-            'exit_time' => 'nullable',
-            'observation' => 'nullable|string',
+        // Log de los datos recibidos para depuración
+        \Log::info('Datos recibidos en AccessController@update', [
+            'request' => $request->all(),
+            'access_id' => $access->id,
         ]);
+        try {
+            $data = $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'guard_id' => 'required|exists:users,id',
+                'bike_id' => 'nullable|exists:bikes,id',
+                'entrance_time' => [
+                    'required',
+                    'regex:/^([01]\d|2[0-3]):([0-5]\d)$/',
+                ],
+                'exit_time' => [
+                    'nullable',
+                    'regex:/^([01]\d|2[0-3]):([0-5]\d)$/',
+                ],
+                'observation' => 'nullable|string|max:255',
+            ], [
+                'entrance_time.required' => 'La hora de entrada es obligatoria.',
+                'entrance_time.regex' => 'La hora de entrada debe tener formato HH:mm.',
+                'exit_time.regex' => 'La hora de salida debe tener formato HH:mm.',
+                'observation.max' => 'La observación no puede superar los 255 caracteres.',
+                'user_id.required' => 'El visitante es obligatorio.',
+                'user_id.exists' => 'El visitante seleccionado no existe.',
+                'guard_id.required' => 'El guardia es obligatorio.',
+                'guard_id.exists' => 'El guardia seleccionado no existe.',
+                'bike_id.exists' => 'La bicicleta seleccionada no existe.',
+            ]);
 
-        $access->update($data);
+            // Log de los datos validados
+            \Log::info('Datos validados en AccessController@update', $data);
 
-        return redirect()->route('guard.control-acceso')->with('success', 'Registro actualizado correctamente.');
+            // Guardar datos anteriores para auditoría
+            $datos_anteriores = $access->toArray();
+            $accessId = $access->id;
+            $editadoPor = auth()->id() ?? 0;
+            $fechaEdicion = now();
+            // Actualizar los campos de hora en formato DATETIME conservando la fecha original
+            $originalEntrance = $access->entrance_time;
+            $originalExit = $access->exit_time;
+            if ($originalEntrance) {
+                $date = date('Y-m-d', strtotime($originalEntrance));
+                $data['entrance_time'] = $date . ' ' . $data['entrance_time'] . ':00';
+            }
+            if ($data['exit_time'] !== null && $originalExit) {
+                $date = date('Y-m-d', strtotime($originalExit));
+                $data['exit_time'] = $date . ' ' . $data['exit_time'] . ':00';
+            } elseif ($data['exit_time'] !== null && $originalEntrance) {
+                // Si no hay exit_time previo, usar la fecha de entrada
+                $date = date('Y-m-d', strtotime($originalEntrance));
+                $data['exit_time'] = $date . ' ' . $data['exit_time'] . ':00';
+            }
+
+            // Insertar en access_modifications ANTES del update
+            $datos_nuevos_temp = array_merge($datos_anteriores, $data); // Previsualización de nuevos datos
+            $insert = \DB::table('access_modifications')->insert([
+                'access_id' => $accessId,
+                'accion' => 'editado',
+                'datos_anteriores' => json_encode($datos_anteriores),
+                'datos_nuevos' => json_encode($datos_nuevos_temp),
+                'editado_por' => $editadoPor,
+                'fecha_edicion' => $fechaEdicion,
+                'created_at' => $fechaEdicion,
+                'updated_at' => $fechaEdicion,
+            ]);
+            if ($insert) {
+                $access->update($data);
+                
+                \Log::info('Auditoría de edición insertada y acceso actualizado', ['access_id' => $accessId]);
+            } else {
+                \Log::error('No se pudo insertar auditoría de edición, acceso NO actualizado', ['access_id' => $accessId]);
+                return back()->with('error', 'No se pudo registrar la auditoría. El acceso no fue actualizado.');
+            }
+
+            \Log::info('Registro actualizado correctamente en AccessController@update', ['access_id' => $access->id]);
+            return redirect()->route('admin.control-acceso')->with('success', 'Registro actualizado correctamente.');
+        } catch (\Exception $e) {
+            \Log::error('Error en AccessController@update', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return back()->with('error', 'Ocurrió un error interno al actualizar el acceso.');
+        }
     }
 
     public function getBikesByRut($rut)
@@ -215,7 +283,30 @@ class AccessController extends Controller
 
     public function destroy(Access $access)
     {
-        $access->delete();
+        // Guardar datos anteriores para auditoría antes de eliminar
+        $datos_anteriores = $access->toArray();
+        $accessId = $access->id;
+        $editadoPor = auth()->id() ?? 0;
+        $fechaEdicion = now();
+        // Insertar en access_modifications ANTES del delete
+        $insert = \DB::table('access_modifications')->insert([
+            'access_id' => $accessId,
+            'accion' => 'eliminado',
+            'datos_anteriores' => json_encode($datos_anteriores),
+            'datos_nuevos' => null,
+            'editado_por' => $editadoPor,
+            'fecha_edicion' => $fechaEdicion,
+            'created_at' => $fechaEdicion,
+            'updated_at' => $fechaEdicion,
+        ]);
+        // Solo si el insert fue exitoso, eliminar el acceso
+        if ($insert) {
+            $deleted = $access->delete();
+            \Log::info('Auditoría insertada y acceso eliminado', ['access_id' => $accessId, 'deleted' => $deleted]);
+        } else {
+            \Log::error('No se pudo insertar auditoría, acceso NO eliminado', ['access_id' => $accessId]);
+            return back()->with('error', 'No se pudo registrar la auditoría. El acceso no fue eliminado.');
+        }
         return redirect()->route('admin.control-acceso')->with('success', 'Acceso eliminado correctamente.');
     }
 }

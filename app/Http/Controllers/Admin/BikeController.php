@@ -8,9 +8,9 @@ use App\Models\Bike;
 
 class BikeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $bikes = Bike::with('user')->get();
+        $bikes = Bike::with('user')->get(); // Mostrar todas, sin filtrar por estado
         return view('admin.bikes', compact('bikes'));
     }
 
@@ -24,7 +24,24 @@ class BikeController extends Controller
     public function destroy($id)
     {
         $bike = Bike::findOrFail($id);
-        $bike->delete();
+        $bike->estado = 'inactivo';
+        $bike->save();
+        return response()->json(['success' => true]);
+    }
+
+    public function activate($id)
+    {
+        $bike = Bike::findOrFail($id);
+        $bike->estado = 'activo';
+        $bike->save();
+        return response()->json(['success' => true]);
+    }
+
+    public function inactivate($id)
+    {
+        $bike = Bike::findOrFail($id);
+        $bike->estado = 'inactivo';
+        $bike->save();
         return response()->json(['success' => true]);
     }
 }
