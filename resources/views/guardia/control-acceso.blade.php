@@ -507,6 +507,9 @@ $(function() {
     });
 });
 
+// --- En el flujo de escaneo QR, tras decidir el tipo de ingreso ---
+let nextModalToOpen = null; // { modalId: string, runValue: string }
+
 // --- Script de escaneo QR con html5-qrcode ---
 let html5QrCodeScanner = null;
 let qrCameras = [];
@@ -574,8 +577,46 @@ if (cameraModal) {
     });
     cameraModal.addEventListener('hidden.bs.modal', () => {
         resetQrModal();
+        // --- Encadenar apertura de modal tras cierre completo del QR ---
+        if (nextModalToOpen) {
+            setTimeout(function() { // Espera mínima para asegurar backdrop limpio
+                let modalInstance = null;
+                if (nextModalToOpen.modalId === 'addAccessModal') {
+                    $('#visitor_rut').val(nextModalToOpen.runValue).trigger('change');
+                    modalInstance = new bootstrap.Modal(document.getElementById('addAccessModal'));
+                    modalInstance.show();
+                } else if (nextModalToOpen.modalId === 'quickAccessModal') {
+                    $('#quick_rut').val(nextModalToOpen.runValue);
+                    modalInstance = new bootstrap.Modal(document.getElementById('quickAccessModal'));
+                    modalInstance.show();
+                }
+                // Solo limpiar backdrop si no hay ningún modal visible tras abrir el nuevo
+                setTimeout(function() {
+                    if ($('.modal.show').length === 0) {
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open');
+                    }
+                }, 300);
+                nextModalToOpen = null;
+            }, 50);
+        }
     });
 }
+
+// Limpieza global de backdrop al cerrar cualquier modal de acceso
+['addAccessModal', 'quickAccessModal'].forEach(function(modalId) {
+    const modalEl = document.getElementById(modalId);
+    if (modalEl) {
+        modalEl.addEventListener('hidden.bs.modal', function() {
+            setTimeout(function() {
+                if ($('.modal.show').length === 0) {
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open');
+                }
+            }, 100);
+        });
+    }
+});
 
 // Cambiar cámara
 $(document).on('change', '#qrCameraSelect', function() {
@@ -696,20 +737,12 @@ function startQrScan(cameraId) {
                             // Usuario registrado
                             const qrModal = bootstrap.Modal.getInstance(document.getElementById('qrModal'));
                             if (qrModal) qrModal.hide();
-                            setTimeout(function() {
-                                $('#visitor_rut').val(runValue).trigger('change');
-                                const accessModal = new bootstrap.Modal(document.getElementById('addAccessModal'));
-                                accessModal.show();
-                            }, 400);
+                            nextModalToOpen = { modalId: 'addAccessModal', runValue };
                         } else if (result.isDenied) {
                             // Ingreso rápido
                             const qrModal = bootstrap.Modal.getInstance(document.getElementById('qrModal'));
                             if (qrModal) qrModal.hide();
-                            setTimeout(function() {
-                                $('#quick_rut').val(runValue);
-                                const quickModal = new bootstrap.Modal(document.getElementById('quickAccessModal'));
-                                quickModal.show();
-                            }, 400);
+                            nextModalToOpen = { modalId: 'quickAccessModal', runValue };
                         } else {
                             // Cancelar: no hacer nada
                         }
