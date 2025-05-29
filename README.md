@@ -20,8 +20,3 @@ Sistema de gestión para control de bicicletas, desarrollado con Laravel. Permit
 - **Base de datos**: MySQL
 - **Despliegue**: (Agrega si aplica, ej: Heroku, AWS, etc.)
 
-## 🚀 Instalación
-
-1. Clonar repositorio:
-   ```bash
-   git clone https://github.com/Kuromaido1019/Bike-Control.git
