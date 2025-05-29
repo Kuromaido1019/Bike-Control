@@ -238,7 +238,21 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body text-center">
-                <video id="cameraVideo" width="320" height="240" autoplay playsinline style="border-radius:10px; background:#000;"></video>
+                <div id="qrStepEscaneo">
+                    <div class="mb-2" id="qrCameraLoading">
+                        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                        <span class="ms-2">Buscando cámaras disponibles...</span>
+                    </div>
+                    <div class="mb-2" id="qrCameraSelectGroup" style="display:none;">
+                        <label for="qrCameraSelect" class="form-label">Seleccionar cámara:</label>
+                        <select id="qrCameraSelect" class="form-select" style="max-width: 320px; margin:auto;"></select>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btnRecargarCamaras">Recargar cámaras</button>
+                    </div>
+                    <div id="reader" style="width:320px; height:240px; margin:auto;"></div>
+                    <div id="qrResult" class="mt-3"></div>
+                    <button type="button" class="btn btn-warning mt-2" id="btnDetenerEscaneo">Detener escaneo</button>
+                    <div id="qrPermisoError" class="text-danger mt-2"></div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -249,6 +263,17 @@
 @endsection
 
 @push('custom-scripts')
+<!-- Espera activa para html5-qrcode antes de inicializar el escaneo -->
+<script>
+function waitForHtml5Qrcode(callback, maxWaitMs = 3000) {
+    const start = Date.now();
+    (function check() {
+        if (window.Html5Qrcode) return callback();
+        if (Date.now() - start > maxWaitMs) return callback('timeout');
+        setTimeout(check, 50);
+    })();
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function() {
@@ -482,34 +507,175 @@ $(function() {
     });
 });
 
-// Reemplazar la lógica de cámara por el patrón robusto:
-let cameraStream = null;
+// --- Script de escaneo QR con html5-qrcode ---
+let html5QrCodeScanner = null;
+let qrCameras = [];
+let currentCameraId = null;
 const cameraModal = document.getElementById('qrModal');
-const cameraVideo = document.getElementById('cameraVideo');
+const qrResult = document.getElementById('qrResult');
+const qrStepEscaneo = document.getElementById('qrStepEscaneo');
+const qrCameraSelect = document.getElementById('qrCameraSelect');
+const qrPermisoError = document.getElementById('qrPermisoError');
 
-if (cameraModal && cameraVideo) {
-    cameraModal.addEventListener('shown.bs.modal', async () => {
-        try {
-            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-            cameraVideo.srcObject = cameraStream;
-        } catch (err) {
-            cameraVideo.style.display = 'none';
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'text-danger mt-2';
-            errorDiv.innerText = 'Error al acceder a la cámara: ' + err.message;
-            cameraVideo.parentNode.appendChild(errorDiv);
-        }
+function resetQrModal() {
+    if (html5QrCodeScanner) {
+        html5QrCodeScanner.stop().then(() => html5QrCodeScanner.clear());
+        html5QrCodeScanner = null;
+    }
+    if (qrResult) qrResult.innerHTML = '';
+    const readerDiv = document.getElementById('reader');
+    if (readerDiv) readerDiv.innerHTML = '';
+    if (qrPermisoError) qrPermisoError.innerHTML = '';
+}
+
+if (cameraModal) {
+    cameraModal.addEventListener('shown.bs.modal', () => {
+        resetQrModal();
+        $('#qrCameraLoading').show();
+        $('#qrCameraSelectGroup').hide();
+        waitForHtml5Qrcode(function(timeout) {
+            if (timeout) {
+                if (qrPermisoError) qrPermisoError.innerHTML = 'No se encontró la librería de escaneo QR.';
+                $('#qrCameraLoading').hide();
+                return;
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                if (qrPermisoError) qrPermisoError.innerHTML = 'Tu navegador no soporta acceso a la cámara (getUserMedia).';
+                $('#qrCameraLoading').hide();
+                return;
+            }
+            Html5Qrcode.getCameras().then(devices => {
+                $('#qrCameraLoading').hide();
+                if (!devices || devices.length === 0) {
+                    if (qrPermisoError) qrPermisoError.innerHTML = 'No se detectaron cámaras disponibles.\n\nAsegúrate de que tu navegador tenga permisos y que la cámara esté conectada.';
+                    return;
+                }
+                qrCameras = devices;
+                qrCameraSelect.innerHTML = '';
+                devices.forEach((cam, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = cam.id;
+                    opt.text = cam.label || `Cámara ${idx+1}`;
+                    qrCameraSelect.appendChild(opt);
+                });
+                if (devices.length === 1) {
+                    $('#qrCameraSelectGroup').hide();
+                } else {
+                    $('#qrCameraSelectGroup').show();
+                }
+                currentCameraId = devices[0].id;
+                startQrScan(currentCameraId);
+            }).catch(err => {
+                $('#qrCameraLoading').hide();
+                if (qrPermisoError) qrPermisoError.innerHTML = 'Error al obtener cámaras: ' + (err && err.message ? err.message : err);
+                console.error('Error al obtener cámaras:', err);
+            });
+        });
     });
     cameraModal.addEventListener('hidden.bs.modal', () => {
-        if (cameraStream) {
-            cameraStream.getTracks().forEach(track => track.stop());
-            cameraVideo.srcObject = null;
-            cameraStream = null;
+        resetQrModal();
+    });
+}
+
+// Cambiar cámara
+$(document).on('change', '#qrCameraSelect', function() {
+    const newCameraId = this.value;
+    if (newCameraId && newCameraId !== currentCameraId) {
+        if (html5QrCodeScanner) {
+            html5QrCodeScanner.stop().then(() => {
+                html5QrCodeScanner.clear();
+                startQrScan(newCameraId);
+            });
+        } else {
+            startQrScan(newCameraId);
         }
-        cameraVideo.style.display = '';
-        // Eliminar mensajes de error si existen
-        const errorDiv = cameraVideo.parentNode.querySelector('.text-danger');
-        if (errorDiv) errorDiv.remove();
+    }
+});
+
+// Detener escaneo
+$(document).on('click', '#btnDetenerEscaneo', function() {
+    resetQrModal();
+});
+
+// Recargar cámaras
+$(document).on('click', '#btnRecargarCamaras', function() {
+    $('#qrCameraLoading').show();
+    $('#qrCameraSelectGroup').hide();
+    $('#qrPermisoError').html('');
+    Html5Qrcode.getCameras().then(devices => {
+        $('#qrCameraLoading').hide();
+        if (!devices || devices.length === 0) {
+            $('#qrPermisoError').html('No se detectaron cámaras disponibles.');
+            return;
+        }
+        qrCameras = devices;
+        qrCameraSelect.innerHTML = '';
+        devices.forEach((cam, idx) => {
+            const opt = document.createElement('option');
+            opt.value = cam.id;
+            opt.text = cam.label || `Cámara ${idx+1}`;
+            qrCameraSelect.appendChild(opt);
+        });
+        if (devices.length === 1) {
+            $('#qrCameraSelectGroup').hide();
+        } else {
+            $('#qrCameraSelectGroup').show();
+        }
+        currentCameraId = devices[0].id;
+        startQrScan(currentCameraId);
+    }).catch(err => {
+        $('#qrCameraLoading').hide();
+        $('#qrPermisoError').html('Error al obtener cámaras: ' + (err && err.message ? err.message : err));
+        console.error('Error al obtener cámaras:', err);
+    });
+});
+
+function startQrScan(cameraId) {
+    currentCameraId = cameraId;
+    qrResult.innerHTML = '';
+    if (qrPermisoError) qrPermisoError.innerHTML = '';
+    const readerDiv = document.getElementById('reader');
+    if (readerDiv) {
+        // Eliminar cualquier canvas o video residual antes de crear la nueva instancia
+        while (readerDiv.firstChild) {
+            readerDiv.removeChild(readerDiv.firstChild);
+        }
+    }
+    if (html5QrCodeScanner && html5QrCodeScanner._isScanning) {
+        html5QrCodeScanner.stop().then(() => html5QrCodeScanner.clear());
+        html5QrCodeScanner = null;
+    } else if (html5QrCodeScanner) {
+        html5QrCodeScanner.clear();
+        html5QrCodeScanner = null;
+    }
+    html5QrCodeScanner = new Html5Qrcode('reader', { useBarCodeDetectorIfSupported: true });
+    html5QrCodeScanner.start(
+        cameraId,
+        { fps: 10, qrbox: { width: 250, height: 180 } },
+        qrText => {
+            let runValue = '';
+            try {
+                // Si el QR es una URL con parámetros, extraer RUN
+                const url = new URL(qrText);
+                runValue = url.searchParams.get('RUN');
+            } catch (e) {
+                // No es una URL válida, intentar extraer con regex
+                const match = qrText.match(/RUN=([0-9kK\-]+)/);
+                if (match) runValue = match[1];
+            }
+            if (runValue) {
+                qrResult.innerHTML = `<span class='text-success'>RUN detectado: <b>${runValue}</b></span>`;
+            } else {
+                qrResult.innerHTML = `<span class='text-success'>QR leído: <b>${qrText}</b></span>`;
+            }
+            if (qrPermisoError) qrPermisoError.innerHTML = '';
+            html5QrCodeScanner.stop().then(() => html5QrCodeScanner.clear());
+        },
+        errorMsg => {
+            // No mostrar errores de escaneo en UI
+        }
+    ).catch(err => {
+        if (qrResult) qrResult.innerHTML = `<span class="text-danger">Error al iniciar la cámara: ${err && err.message ? err.message : err}</span>`;
     });
 }
 </script>
