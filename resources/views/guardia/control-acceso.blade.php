@@ -16,6 +16,9 @@
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickAccessModal">
                     <i class="fas fa-user-plus"></i> Nuevo Ingreso Rápido
                 </button>
+                <button class="btn btn-secondary" id="btnActivarCamara" type="button" data-bs-toggle="modal" data-bs-target="#qrModal">
+                    <i class="fas fa-camera"></i> Activar Cámara
+                </button>
             </div>
 
             <!-- Tabla de accesos -->
@@ -222,6 +225,24 @@
                     <button type="submit" class="btn btn-primary">Actualizar</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para escaneo QR -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrModalLabel">Escanear Código QR</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center">
+                <video id="cameraVideo" width="320" height="240" autoplay playsinline style="border-radius:10px; background:#000;"></video>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
         </div>
     </div>
 </div>
@@ -460,5 +481,36 @@ $(function() {
         createdUserId = null;
     });
 });
+
+// Reemplazar la lógica de cámara por el patrón robusto:
+let cameraStream = null;
+const cameraModal = document.getElementById('qrModal');
+const cameraVideo = document.getElementById('cameraVideo');
+
+if (cameraModal && cameraVideo) {
+    cameraModal.addEventListener('shown.bs.modal', async () => {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            cameraVideo.srcObject = cameraStream;
+        } catch (err) {
+            cameraVideo.style.display = 'none';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'text-danger mt-2';
+            errorDiv.innerText = 'Error al acceder a la cámara: ' + err.message;
+            cameraVideo.parentNode.appendChild(errorDiv);
+        }
+    });
+    cameraModal.addEventListener('hidden.bs.modal', () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraVideo.srcObject = null;
+            cameraStream = null;
+        }
+        cameraVideo.style.display = '';
+        // Eliminar mensajes de error si existen
+        const errorDiv = cameraVideo.parentNode.querySelector('.text-danger');
+        if (errorDiv) errorDiv.remove();
+    });
+}
 </script>
 @endpush

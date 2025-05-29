@@ -50,6 +50,9 @@
     </style>
 
     @stack('styles')
+
+    <!-- Importación del script html5-qrcode -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js"></script>
 </head>
 <body id="page-top" class="sidebar-toggled">
     <!-- Page Wrapper -->
