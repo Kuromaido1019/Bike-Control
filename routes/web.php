@@ -20,6 +20,9 @@ Route::get('/api/bicicletas-por-rut/{rut}', [\App\Http\Controllers\AccessControl
 // Endpoint para asociar bicicleta (AJAX)
 Route::post('/api/asociar-bicicleta', [\App\Http\Controllers\BikeController::class, 'associateBike']);
 
+// Endpoint para buscar usuario por RUT (AJAX)
+Route::get('/api/usuario-por-rut/{rut}', [\App\Http\Controllers\AccessController::class, 'getUserByRut']);
+
 //--------------------------------------------------------------------------
 // Rutas de Autenticación
 //--------------------------------------------------------------------------

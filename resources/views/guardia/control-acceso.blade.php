@@ -17,7 +17,7 @@
                     <i class="fas fa-user-plus"></i> Nuevo Ingreso Rápido
                 </button>
                 <button class="btn btn-secondary" id="btnActivarCamara" type="button" data-bs-toggle="modal" data-bs-target="#qrModal">
-                    <i class="fas fa-camera"></i> Activar Cámara
+                    <i class="fas fa-camera"></i> Escanear Credencial
                 </button>
             </div>
 
@@ -630,6 +630,20 @@ $(document).on('click', '#btnRecargarCamaras', function() {
     });
 });
 
+function isValidRut(rut) {
+    // Valida formato chileno: 12345678-9 o 12345678-K
+    return /^[0-9]{7,8}-[0-9kK]$/.test(rut);
+}
+
+function buscarUsuarioPorRut(rut) {
+    return $.ajax({
+        url: '/api/usuario-por-rut/' + encodeURIComponent(rut),
+        method: 'GET'
+    });
+}
+
+// --- Mejorar manejo de errores en el flujo QR ---
+// Reemplazar el uso de .fail en el flujo QR por manejo de error más detallado
 function startQrScan(cameraId) {
     currentCameraId = cameraId;
     qrResult.innerHTML = '';
@@ -663,10 +677,47 @@ function startQrScan(cameraId) {
                 const match = qrText.match(/RUN=([0-9kK\-]+)/);
                 if (match) runValue = match[1];
             }
-            if (runValue) {
-                qrResult.innerHTML = `<span class='text-success'>RUN detectado: <b>${runValue}</b></span>`;
+            if (!runValue) runValue = qrText;
+            qrResult.innerHTML = `<span class='text-success'>RUN detectado: <b>${runValue}</b></span>`;
+            if (isValidRut(runValue)) {
+                // --- NUEVO FLUJO: SweetAlert para decidir tipo de ingreso ---
+                setTimeout(function() {
+                    Swal.fire({
+                        title: '¿El usuario está previamente registrado?',
+                        text: 'RUN/RUT detectado: ' + runValue,
+                        icon: 'question',
+                        showCancelButton: true,
+                        showDenyButton: true,
+                        confirmButtonText: 'Sí',
+                        denyButtonText: 'No',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Usuario registrado
+                            const qrModal = bootstrap.Modal.getInstance(document.getElementById('qrModal'));
+                            if (qrModal) qrModal.hide();
+                            setTimeout(function() {
+                                $('#visitor_rut').val(runValue).trigger('change');
+                                const accessModal = new bootstrap.Modal(document.getElementById('addAccessModal'));
+                                accessModal.show();
+                            }, 400);
+                        } else if (result.isDenied) {
+                            // Ingreso rápido
+                            const qrModal = bootstrap.Modal.getInstance(document.getElementById('qrModal'));
+                            if (qrModal) qrModal.hide();
+                            setTimeout(function() {
+                                $('#quick_rut').val(runValue);
+                                const quickModal = new bootstrap.Modal(document.getElementById('quickAccessModal'));
+                                quickModal.show();
+                            }, 400);
+                        } else {
+                            // Cancelar: no hacer nada
+                        }
+                    });
+                }, 400);
+                return;
             } else {
-                qrResult.innerHTML = `<span class='text-success'>QR leído: <b>${qrText}</b></span>`;
+                Swal.fire('RUN inválido', 'El RUN/RUT escaneado no tiene un formato válido.', 'warning');
             }
             if (qrPermisoError) qrPermisoError.innerHTML = '';
             html5QrCodeScanner.stop().then(() => html5QrCodeScanner.clear());

@@ -309,4 +309,34 @@ class AccessController extends Controller
         }
         return redirect()->route('admin.control-acceso')->with('success', 'Acceso eliminado correctamente.');
     }
+
+    public function getUserByRut($rut)
+    {
+        try {
+            // Normalizar RUT: quitar espacios y pasar a mayúsculas
+            $rut = strtoupper(trim($rut));
+            $user = User::where('rut', $rut)->first();
+            if (!$user) return response()->json(['message' => 'Usuario no encontrado'], 404);
+            // Proteger la relación bikes ante posibles errores
+            try {
+                $bike = $user->bikes()->first();
+            } catch (\Exception $e) {
+                \Log::error('Error al obtener bicicleta para usuario', ['rut' => $rut, 'error' => $e->getMessage()]);
+                $bike = null;
+            }
+            return response()->json([
+                'id' => $user->id,
+                'name' => $user->name,
+                'rut' => $user->rut,
+                'bike' => $bike ? [
+                    'id' => $bike->id,
+                    'brand' => $bike->brand,
+                    'model' => $bike->model
+                ] : null
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error en getUserByRut', ['rut' => $rut, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'Error interno al buscar usuario'], 500);
+        }
+    }
 }
