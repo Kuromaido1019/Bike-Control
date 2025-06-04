@@ -50,12 +50,12 @@
                             <td>{{ $access->guardUser->name ?? '-' }}</td>
                             <td>
                                 @if($access->entrance_time)
-                                    {{ $access->entrance_time }}
+                                    {{ \Carbon\Carbon::parse($access->entrance_time)->format('H:i:s') }}
                                 @endif
                             </td>
                             <td>
                                 @if($access->exit_time)
-                                    {{ $access->exit_time }}
+                                    {{ \Carbon\Carbon::parse($access->exit_time)->format('H:i:s') }}
                                 @else
                                     <form method="POST" action="{{ route('guard.control-acceso.mark-exit', $access->id) }}" style="display:inline">
                                         @csrf
