@@ -49,41 +49,39 @@ class AccessController extends Controller
 
     public function update(Request $request, Access $access)
     {
-        // Log de los datos recibidos para depuración
         \Log::info('Datos recibidos en AccessController@update', [
             'request' => $request->all(),
             'access_id' => $access->id,
         ]);
         try {
+            // Permitir solo editar observación si exit_time es null
+            if ($access->exit_time !== null) {
+                $msg = 'No se puede editar la observación después de marcar la salida.';
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $msg], 403);
+                }
+                return back()->with('error', $msg);
+            }
             $data = $request->validate([
-                'user_id' => 'required|exists:users,id',
-                'guard_id' => 'required|exists:users,id',
-                'bike_id' => 'nullable|exists:bikes,id',
-                // Solo permitir editar la observación desde la vista de guardia
                 'observation' => 'nullable|string|max:255',
             ], [
-                'user_id.required' => 'El visitante es obligatorio.',
-                'user_id.exists' => 'El visitante seleccionado no existe.',
-                'guard_id.required' => 'El guardia es obligatorio.',
-                'guard_id.exists' => 'El guardia seleccionado no existe.',
-                'bike_id.exists' => 'La bicicleta seleccionada no existe.',
                 'observation.max' => 'La observación no puede superar los 255 caracteres.',
             ]);
-
-            // Nunca actualizar entrance_time ni exit_time aquí
-            unset($data['entrance_time'], $data['exit_time']);
-
-            // Solo actualizar los campos permitidos (no tocar entrance_time ni exit_time aquí)
             $access->update($data);
-            
-            \Log::info('Registro actualizado correctamente en AccessController@update', ['access_id' => $access->id]);
-            return redirect()->route('admin.control-acceso')->with('success', 'Registro actualizado correctamente.');
+            \Log::info('Observación actualizada correctamente en AccessController@update', ['access_id' => $access->id]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => true]);
+            }
+            return redirect()->route('guard.control-acceso')->with('success', 'Observación actualizada correctamente.');
         } catch (\Exception $e) {
             \Log::error('Error en AccessController@update', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            return back()->with('error', 'Ocurrió un error interno al actualizar el acceso.');
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Ocurrió un error interno al actualizar la observación.'], 500);
+            }
+            return back()->with('error', 'Ocurrió un error interno al actualizar la observación.');
         }
     }
 

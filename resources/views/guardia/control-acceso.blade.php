@@ -65,7 +65,7 @@
                             </td>
                             <td>{{ $access->observation ?? '-' }}</td>
                             <td>
-                                <button class="btn btn-info btn-sm btn-edit-access"
+                                <button class="btn btn-info btn-sm btn-edit-access" 
                                     data-id="{{ $access->id }}"
                                     data-user_id="{{ $access->user_id }}"
                                     data-guard_id="{{ $access->guard_id }}"
@@ -73,7 +73,9 @@
                                     data-entrance_time="{{ $access->entrance_time }}"
                                     data-exit_time="{{ $access->exit_time }}"
                                     data-observation="{{ $access->observation }}"
-                                    data-bs-toggle="modal" data-bs-target="#editAccessModal">
+                                    data-bs-toggle="modal" data-bs-target="#editAccessModal"
+                                    @if($access->exit_time) disabled @endif
+                                >
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
                             </td>
@@ -303,6 +305,55 @@ $(document).ready(function() {
             horaSalida = salida.substring(0,5);
         }
         $('#edit_exit_time').val(horaSalida);
+    });
+
+    // Enviar edición de observación solo si exit_time es null
+    $('#editAccessForm').on('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        // Verificar si el botón de editar estaba habilitado (exit_time == null)
+        const exitTime = $('#edit_exit_time').val();
+        if (exitTime) {
+            Swal.fire({
+                icon: 'error',
+                title: 'No permitido',
+                text: 'No se puede editar la observación después de marcar la salida.',
+                confirmButtonText: 'Aceptar'
+            });
+            return false;
+        }
+        Swal.fire({
+            title: '¿Guardar cambios?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: form.action,
+                    method: 'POST',
+                    data: $(form).serialize(),
+                    success: function(response) {
+                        var modalEl = document.getElementById('editAccessModal');
+                        var myModal = bootstrap.Modal.getInstance(modalEl);
+                        if (!myModal) {
+                            myModal = new bootstrap.Modal(modalEl);
+                        }
+                        myModal.hide();
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Editado!',
+                            text: 'La observación fue actualizada.'
+                        }).then(() => location.reload());
+                    },
+                    error: function(xhr) {
+                        let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'No se pudo editar la observación.';
+                        Swal.fire('Error', msg, 'error');
+                    }
+                });
+            }
+        });
     });
 
     // Lógica para cargar bicicletas según RUT
