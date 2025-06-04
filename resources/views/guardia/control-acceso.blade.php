@@ -50,19 +50,15 @@
                             <td>{{ $access->guardUser->name ?? '-' }}</td>
                             <td>
                                 @if($access->entrance_time)
-                                    {{ \Carbon\Carbon::parse($access->entrance_time)->format('H:i') }}
-                                @else
-                                    -
+                                    {{ $access->entrance_time }}
                                 @endif
                             </td>
                             <td>
                                 @if($access->exit_time)
-                                    {{ \Carbon\Carbon::parse($access->exit_time)->format('H:i') }}
+                                    {{ $access->exit_time }}
                                 @else
-                                    <form method="POST" action="{{ route('guard.control-acceso.update', $access->id) }}" style="display:inline">
+                                    <form method="POST" action="{{ route('guard.control-acceso.mark-exit', $access->id) }}" style="display:inline">
                                         @csrf
-                                        @method('PUT')
-                                        <input type="hidden" name="mark_exit" value="true">
                                         <button type="submit" class="btn btn-success btn-sm">Marcar Salida</button>
                                     </form>
                                 @endif
@@ -279,7 +275,7 @@ function waitForHtml5Qrcode(callback, maxWaitMs = 3000) {
 $(document).ready(function() {
     $('#accessTable').DataTable({
         language: {
-            url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+            url: '/js/Spanish.json'
         }
     });
 
@@ -289,10 +285,24 @@ $(document).ready(function() {
         const id = btn.data('id');
         $('#editAccessForm').attr('action', `/guard/control-acceso/${id}`);
         $('#edit_observation').val(btn.data('observation'));
-        @if(request()->is('admin/*'))
-        $('#edit_entrance_time').val(btn.data('entrance_time'));
-        $('#edit_exit_time').val(btn.data('exit_time'));
-        @endif
+        // Formatear hora de entrada a HH:mm
+        let entrada = btn.data('entrance_time');
+        let horaEntrada = '';
+        if (entrada && entrada.length >= 16 && entrada.includes(':')) {
+            horaEntrada = entrada.substring(11,16);
+        } else if (entrada && entrada.length >= 5) {
+            horaEntrada = entrada.substring(0,5);
+        }
+        $('#edit_entrance_time').val(horaEntrada);
+        // Formatear hora de salida a HH:mm
+        let salida = btn.data('exit_time');
+        let horaSalida = '';
+        if (salida && salida.length >= 16 && salida.includes(':')) {
+            horaSalida = salida.substring(11,16);
+        } else if (salida && salida.length >= 5) {
+            horaSalida = salida.substring(0,5);
+        }
+        $('#edit_exit_time').val(horaSalida);
     });
 
     // Lógica para cargar bicicletas según RUT
@@ -762,5 +772,27 @@ function startQrScan(cameraId) {
         if (qrResult) qrResult.innerHTML = `<span class="text-danger">Error al iniciar la cámara: ${err && err.message ? err.message : err}</span>`;
     });
 }
+
+// Log en consola al enviar el formulario de nuevo acceso (modal usuario registrado)
+$('#addAccessModal form').on('submit', function(e) {
+    const now = new Date();
+    console.log('[LOG] Registro desde modal usuario registrado:', now.toLocaleString('es-CL'), 'ISO:', now.toISOString());
+});
+
+// Log en consola al presionar "Marcar Entrada" o "Marcar Salida" (ambos)
+$(document).on('submit', 'form[action*="control-acceso"]', function(e) {
+    if ($(this).find('input[name="mark_entrance"]').length) {
+        const now = new Date();
+        console.log('[LOG] Botón Marcar Entrada presionado:', now.toLocaleString('es-CL'), 'ISO:', now.toISOString());
+    }
+    if ($(this).find('input[name="mark_exit"]').length) {
+        const now = new Date();
+        console.log('[LOG] Botón Marcar Salida presionado:', now.toLocaleString('es-CL'), 'ISO:', now.toISOString());
+    }
+});
+$(document).on('submit', 'form[action*="control-acceso/"][action$="/salida"]', function(e) {
+    const now = new Date();
+    console.log('[LOG] Botón Marcar Salida (ruta específica) presionado:', now.toLocaleString('es-CL'), 'ISO:', now.toISOString());
+});
 </script>
 @endpush

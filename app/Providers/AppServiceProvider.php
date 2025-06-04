@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Forzar zona horaria para todo PHP y Carbon
+        date_default_timezone_set(config('app.timezone', 'America/Santiago'));
+        \Carbon\Carbon::setLocale(config('app.locale', 'es'));
     }
 }

@@ -58,11 +58,13 @@
                                             ¿Olvidaste tu contraseña?
                                         </a>
                                     </div>
+                                    <!-- Enlace de registro
                                     <div class="text-center mt-2">
                                         <a class="small" href="{{ route('register') }}">
                                             ¿No tienes cuenta? Regístrate
                                         </a>
                                     </div>
+                                    -->
                                 </form>
                                 <script>
                                 document.addEventListener('DOMContentLoaded', function() {

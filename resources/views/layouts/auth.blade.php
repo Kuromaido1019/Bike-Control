@@ -66,7 +66,7 @@
         // Oculta el loader cuando la página termina de cargar (mínimo 6 segundos visible)
         window.addEventListener('DOMContentLoaded', function() {
             var loader = document.getElementById('login-loader-bg');
-            var minTime = 2000; // 2 segundos
+            var minTime = 500; // 2 segundos
             var start = Date.now();
             function hideLoader() {
                 var elapsed = Date.now() - start;

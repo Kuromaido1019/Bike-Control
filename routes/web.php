@@ -80,6 +80,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/guard/control-acceso', [\App\Http\Controllers\AccessController::class, 'index'])->name('guard.control-acceso');
     Route::post('/guard/control-acceso', [\App\Http\Controllers\AccessController::class, 'store'])->name('guard.control-acceso.store');
     Route::put('/guard/control-acceso/{access}', [\App\Http\Controllers\AccessController::class, 'update'])->name('guard.control-acceso.update');
+    Route::post('/guard/control-acceso/{access}/salida', [\App\Http\Controllers\AccessController::class, 'markExit'])->name('guard.control-acceso.mark-exit');
     Route::post('/guard/control-acceso/quick', [\App\Http\Controllers\AccessController::class, 'quickAccess'])->name('guard.control-acceso.quick');
     Route::post('/guard/control-acceso/quick/user', [\App\Http\Controllers\AccessController::class, 'quickUser'])->name('guard.control-acceso.quick.user');
     Route::post('/guard/control-acceso/quick/bike', [\App\Http\Controllers\AccessController::class, 'quickBike'])->name('guard.control-acceso.quick.bike');

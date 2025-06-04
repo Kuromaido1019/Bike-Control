@@ -15,7 +15,15 @@ class AccessController extends Controller
 {
     public function index()
     {
-        $accesses = Access::with(['user', 'guardUser', 'bike'])->orderByDesc('entrance_time')->get();
+        if (request()->is('admin/*')) {
+            $accesses = Access::with(['user', 'guardUser', 'bike'])->orderByDesc('entrance_time')->get();
+        } else {
+            // Solo mostrar accesos del día actual para guardia
+            $accesses = Access::with(['user', 'guardUser', 'bike'])
+                ->whereDate('entrance_time', now()->toDateString())
+                ->orderByDesc('entrance_time')
+                ->get();
+        }
         $bikes = Bike::all();
         $visitantes = User::where('role', 'visitante')->get();
         return view(request()->is('admin/*') ? 'admin.control-acceso' : 'guardia.control-acceso', compact('accesses', 'bikes', 'visitantes'));
@@ -35,8 +43,6 @@ class AccessController extends Controller
             'guard_id' => 'required|exists:users,id',
         ]);
         $data['user_id'] = $user->id;
-        $data['entrance_time'] = now()->format('Y-m-d H:i:s'); // Guardar la fecha y hora actual en formato DATETIME
-        $data['exit_time'] = null; // Dejar vacío el campo de salida
         Access::create($data);
         return redirect()->route('guard.control-acceso')->with('success', 'Acceso registrado correctamente.');
     }
@@ -53,72 +59,23 @@ class AccessController extends Controller
                 'user_id' => 'required|exists:users,id',
                 'guard_id' => 'required|exists:users,id',
                 'bike_id' => 'nullable|exists:bikes,id',
-                'entrance_time' => [
-                    'required',
-                    'regex:/^([01]\d|2[0-3]):([0-5]\d)$/',
-                ],
-                'exit_time' => [
-                    'nullable',
-                    'regex:/^([01]\d|2[0-3]):([0-5]\d)$/',
-                ],
+                // Solo permitir editar la observación desde la vista de guardia
                 'observation' => 'nullable|string|max:255',
             ], [
-                'entrance_time.required' => 'La hora de entrada es obligatoria.',
-                'entrance_time.regex' => 'La hora de entrada debe tener formato HH:mm.',
-                'exit_time.regex' => 'La hora de salida debe tener formato HH:mm.',
-                'observation.max' => 'La observación no puede superar los 255 caracteres.',
                 'user_id.required' => 'El visitante es obligatorio.',
                 'user_id.exists' => 'El visitante seleccionado no existe.',
                 'guard_id.required' => 'El guardia es obligatorio.',
                 'guard_id.exists' => 'El guardia seleccionado no existe.',
                 'bike_id.exists' => 'La bicicleta seleccionada no existe.',
+                'observation.max' => 'La observación no puede superar los 255 caracteres.',
             ]);
 
-            // Log de los datos validados
-            \Log::info('Datos validados en AccessController@update', $data);
+            // Nunca actualizar entrance_time ni exit_time aquí
+            unset($data['entrance_time'], $data['exit_time']);
 
-            // Guardar datos anteriores para auditoría
-            $datos_anteriores = $access->toArray();
-            $accessId = $access->id;
-            $editadoPor = auth()->id() ?? 0;
-            $fechaEdicion = now();
-            // Actualizar los campos de hora en formato DATETIME conservando la fecha original
-            $originalEntrance = $access->entrance_time;
-            $originalExit = $access->exit_time;
-            if ($originalEntrance) {
-                $date = date('Y-m-d', strtotime($originalEntrance));
-                $data['entrance_time'] = $date . ' ' . $data['entrance_time'] . ':00';
-            }
-            if ($data['exit_time'] !== null && $originalExit) {
-                $date = date('Y-m-d', strtotime($originalExit));
-                $data['exit_time'] = $date . ' ' . $data['exit_time'] . ':00';
-            } elseif ($data['exit_time'] !== null && $originalEntrance) {
-                // Si no hay exit_time previo, usar la fecha de entrada
-                $date = date('Y-m-d', strtotime($originalEntrance));
-                $data['exit_time'] = $date . ' ' . $data['exit_time'] . ':00';
-            }
-
-            // Insertar en access_modifications ANTES del update
-            $datos_nuevos_temp = array_merge($datos_anteriores, $data); // Previsualización de nuevos datos
-            $insert = \DB::table('access_modifications')->insert([
-                'access_id' => $accessId,
-                'accion' => 'editado',
-                'datos_anteriores' => json_encode($datos_anteriores),
-                'datos_nuevos' => json_encode($datos_nuevos_temp),
-                'editado_por' => $editadoPor,
-                'fecha_edicion' => $fechaEdicion,
-                'created_at' => $fechaEdicion,
-                'updated_at' => $fechaEdicion,
-            ]);
-            if ($insert) {
-                $access->update($data);
-                
-                \Log::info('Auditoría de edición insertada y acceso actualizado', ['access_id' => $accessId]);
-            } else {
-                \Log::error('No se pudo insertar auditoría de edición, acceso NO actualizado', ['access_id' => $accessId]);
-                return back()->with('error', 'No se pudo registrar la auditoría. El acceso no fue actualizado.');
-            }
-
+            // Solo actualizar los campos permitidos (no tocar entrance_time ni exit_time aquí)
+            $access->update($data);
+            
             \Log::info('Registro actualizado correctamente en AccessController@update', ['access_id' => $access->id]);
             return redirect()->route('admin.control-acceso')->with('success', 'Registro actualizado correctamente.');
         } catch (\Exception $e) {
@@ -337,6 +294,26 @@ class AccessController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error en getUserByRut', ['rut' => $rut, 'error' => $e->getMessage()]);
             return response()->json(['message' => 'Error interno al buscar usuario'], 500);
+        }
+    }
+
+    public function markExit($id)
+    {
+        $access = Access::findOrFail($id);
+        if (is_null($access->exit_time)) {
+            $exitTime = \Carbon\Carbon::now('America/Santiago');
+            $access->exit_time = $exitTime;
+            $access->save();
+            
+            \Log::info('Salida marcada', [
+                'access_id' => $access->id,
+                'exit_time' => $exitTime->toDateTimeString(),
+                'exit_time_iso' => $exitTime->toIso8601String(),
+                'db_exit_time' => $access->exit_time,
+            ]);
+            return redirect()->route('guard.control-acceso')->with('success', 'Salida marcada correctamente.');
+        } else {
+            return redirect()->route('guard.control-acceso')->with('error', 'La salida ya fue marcada.');
         }
     }
 }
