@@ -42,6 +42,12 @@
                 <span>Gestión de Bicicletas</span>
             </a>
         </li>
+        <li class="nav-item {{ request()->routeIs('guard.incidents.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('guard.incidents.index') }}">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Incidentes / Reclamos</span>
+            </a>
+        </li>
         <hr class="sidebar-divider">
         @endif
 
@@ -52,6 +58,12 @@
             <a class="nav-link" href="{{ route('guard.control-acceso') }}">
                 <i class="fas fa-fw fa-shield-dog"></i>
                 <span>Control Acceso</span>
+            </a>
+        </li>
+        <li class="nav-item {{ request()->routeIs('guard.incidents.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('guard.incidents.index') }}">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Incidentes / Reclamos</span>
             </a>
         </li>
         <hr class="sidebar-divider">

@@ -10,6 +10,7 @@ use App\Http\Controllers\BikeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\BikeController as AdminBikeController;
+use App\Http\Controllers\Guardia\IncidentController;
 
 // Redirección inicial
 Route::redirect('/', '/login');
@@ -100,6 +101,13 @@ Route::middleware('auth')->group(function () {
     // Rutas comunes para todos
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Rutas para el módulo de incidentes del guardia (solo auth, sin role)
+    Route::middleware(['auth'])->prefix('guardia')->group(function () {
+        Route::get('/incidentes', [IncidentController::class, 'index'])->name('guard.incidents.index');
+        Route::get('/incidentes/crear', [IncidentController::class, 'create'])->name('guard.incidents.create');
+        Route::post('/incidentes', [IncidentController::class, 'store'])->name('guard.incidents.store');
+    });
 });
 
 // Fallback para 404

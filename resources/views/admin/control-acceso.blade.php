@@ -25,8 +25,7 @@
                                     <th>Entrada</th>
                                     <th>Salida</th>
                                     <th>Observación</th>
-                                    <th>Editar</th>
-                                    <th>Eliminar</th>
+                                    {{-- <th>Editar</th> --}}
                                 </tr>
                             </thead>
                             <tbody>
@@ -40,7 +39,7 @@
                                     <td>{{ $access->entrance_time ? \Carbon\Carbon::parse($access->entrance_time)->format('H:i') : '-' }}</td>
                                     <td>{{ $access->exit_time ? \Carbon\Carbon::parse($access->exit_time)->format('H:i') : '-' }}</td>
                                     <td>{{ $access->observation ?? '-' }}</td>
-                                    <td>
+                                    {{-- <td>
                                         <button class="btn btn-primary btn-sm btn-edit-access"
                                             data-id="{{ $access->id }}"
                                             data-user_id="{{ $access->user_id }}"
@@ -52,14 +51,7 @@
                                             data-bs-toggle="modal" data-bs-target="#editAccessModal">
                                             <i class="fas fa-edit"></i> Editar
                                         </button>
-                                    </td>
-                                    <td>
-                                        <form method="POST" action="{{ route('admin.control-acceso.destroy', $access->id) }}" style="display:inline" onsubmit="return confirm('¿Está seguro de eliminar este acceso?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Eliminar</button>
-                                        </form>
-                                    </td>
+                                    </td> --}}
                                 </tr>
                                 @endforeach
                             </tbody>
