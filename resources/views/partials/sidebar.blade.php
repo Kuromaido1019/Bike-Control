@@ -48,6 +48,12 @@
                 <span>Incidentes / Reclamos</span>
             </a>
         </li>
+        <li class="nav-item {{ request()->is('admin/reportes*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('admin.reports.index') }}">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reportes</span>
+            </a>
+        </li>
         <hr class="sidebar-divider">
         @endif
 

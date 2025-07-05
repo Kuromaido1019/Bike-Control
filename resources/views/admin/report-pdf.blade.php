@@ -45,105 +45,33 @@
             <p style="margin:0; font-size:12px; color:#395B50;">Generado: {{ $generated ?? Carbon::now()->format('d/m/Y H:i') }}</p>
         </div>
     </div>
-
-    @switch($type)
-        @case('general')
-            <h2 class="section-title">Resumen General</h2>
-            <ul>
-                <li><strong>Usuarios registrados:</strong> {{ $totalUsers ?? '---' }}</li>
-                <li><strong>Bicicletas registradas:</strong> {{ $totalBikes ?? '---' }}</li>
-                <li><strong>Ingresos este mes:</strong> {{ $monthlyAccesses ?? '---' }}</li>
-            </ul>
-            <h3 class="section-title">Top 5 usuarios más activos del mes</h3>
-            <table>
-                <thead><tr><th>Usuario</th><th>Ingresos</th></tr></thead>
-                <tbody>
-                @forelse($topUsers as $userStat)
-                    <tr>
-                        <td>{{ $userStat->user ? $userStat->user->name : '---' }}</td>
-                        <td>{{ $userStat->total }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="2">Sin datos</td></tr>
-                @endforelse
-                </tbody>
-            </table>
-            @break
-        @case('accesos')
-            <h2 class="section-title">Reporte de Accesos</h2>
-            <table>
-                <thead><tr><th>Usuario</th><th>Entrada</th><th>Salida</th><th>Observación</th></tr></thead>
-                <tbody>
-                @forelse($accesses as $access)
-                    <tr>
-                        <td>{{ $access->user ? $access->user->name : '---' }}</td>
-                        <td>{{ $access->entrance_time ? Carbon::parse($access->entrance_time)->format('d/m/Y H:i') : '---' }}</td>
-                        <td>{{ $access->exit_time ? Carbon::parse($access->exit_time)->format('d/m/Y H:i') : '---' }}</td>
-                        <td>{{ $access->observation ?? '' }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="4">Sin accesos registrados</td></tr>
-                @endforelse
-                </tbody>
-            </table>
-            @break
-        @case('usuarios')
-            <h2 class="section-title">Usuarios más activos</h2>
-            <table>
-                <thead><tr><th>Usuario</th><th>Ingresos este mes</th></tr></thead>
-                <tbody>
-                @forelse($topUsers as $userStat)
-                    <tr>
-                        <td>{{ $userStat->user ? $userStat->user->name : '---' }}</td>
-                        <td>{{ $userStat->total }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="2">Sin datos</td></tr>
-                @endforelse
-                </tbody>
-            </table>
-            @break
-        @case('bicicletas')
-            <h2 class="section-title">Reporte de Bicicletas</h2>
-            <table>
-                <thead><tr><th>Usuario</th><th>Marca</th><th>Modelo</th><th>Color</th><th>Registrada</th></tr></thead>
-                <tbody>
-                @forelse($bikes as $bike)
-                    <tr>
-                        <td>{{ $bike->user ? $bike->user->name : '---' }}</td>
-                        <td>{{ $bike->brand }}</td>
-                        <td>{{ $bike->model }}</td>
-                        <td>{{ $bike->color }}</td>
-                        <td>{{ $bike->created_at ? Carbon::parse($bike->created_at)->format('d/m/Y') : '---' }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5">Sin bicicletas registradas</td></tr>
-                @endforelse
-                </tbody>
-            </table>
-            @break
-        @case('incidentes')
-            <h2 class="section-title">Reporte de Incidentes/Observaciones</h2>
-            <table>
-                <thead><tr><th>Usuario</th><th>Fecha</th><th>Tipo</th><th>Observación</th></tr></thead>
-                <tbody>
-                @forelse($incidents as $incident)
-                    <tr>
-                        <td>{{ $incident->user ? $incident->user->name : '---' }}</td>
-                        <td>{{ $incident->created_at ? Carbon::parse($incident->created_at)->format('d/m/Y H:i') : '---' }}</td>
-                        <td>{{ $incident->type ?? '---' }}</td>
-                        <td>{{ $incident->observation ?? '' }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="4">Sin incidentes registrados</td></tr>
-                @endforelse
-                </tbody>
-            </table>
-            @break
-        @default
-            <p>No hay datos para mostrar.</p>
-    @endswitch
-
+    <h2 class="section-title">Accesos registrados</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Guardia</th>
+                <th>Bicicleta</th>
+                <th>Entrada</th>
+                <th>Salida</th>
+                <th>Observación</th>
+            </tr>
+        </thead>
+        <tbody>
+        @forelse($accesses as $access)
+            <tr>
+                <td>{{ $access->user ? $access->user->name : '---' }}</td>
+                <td>{{ $access->guardUser ? $access->guardUser->name : '---' }}</td>
+                <td>{{ $access->bike ? $access->bike->brand . ' ' . $access->bike->model : '---' }}</td>
+                <td>{{ $access->entrance_time ? Carbon::parse($access->entrance_time)->format('d/m/Y H:i') : '---' }}</td>
+                <td>{{ $access->exit_time ? Carbon::parse($access->exit_time)->format('d/m/Y H:i') : '---' }}</td>
+                <td>{{ $access->observation ?? '' }}</td>
+            </tr>
+        @empty
+            <tr><td colspan="6">Sin accesos registrados en este rango.</td></tr>
+        @endforelse
+        </tbody>
+    </table>
     <div class="footer">
         <p>BikeControl &copy; {{ date('Y') }} | Reporte generado automáticamente.</p>
     </div>

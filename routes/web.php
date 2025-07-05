@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\BikeController as AdminBikeController;
 use App\Http\Controllers\Guardia\IncidentController;
+use App\Http\Controllers\Admin\ReportController;
 
 // Redirección inicial
 Route::redirect('/', '/login');
@@ -70,6 +71,11 @@ Route::middleware('auth')->group(function () {
 
         // Ruta para generación de reportes PDF desde el dashboard admin
         Route::get('/report', [\App\Http\Controllers\DashboardController::class, 'report'])->name('report');
+
+        // Ruta para reportes admin
+        Route::get('/reportes', [ReportController::class, 'index'])->name('reports.index');
+        // Nueva ruta para PDF de accesos filtrados por fecha y hora
+        Route::get('/reportes/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
 
         Route::post('users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');
         Route::post('users/{user}/inactivate', [UserController::class, 'inactivate'])->name('users.inactivate');
