@@ -3,8 +3,8 @@
 @section('title', 'Control de Acceso')
 
 @section('content')
-<div class="container py-4">
-    <div class="row justify-content-center">
+<div class="container-fluid py-4"><!-- Cambiado a container-fluid -->
+    <div class="row">
         <div class="col-12">
             <h4 class="mb-4 text-primary">Gestión de Accesos</h4>
             <div class="card shadow mb-4">

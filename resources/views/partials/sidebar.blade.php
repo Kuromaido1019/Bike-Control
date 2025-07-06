@@ -31,7 +31,7 @@
             </a>
         </li>
         <li class="nav-item {{ request()->is('admin/control-acceso*') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('admin.control-acceso') }}">
+            <a class="nav-link text-start" href="{{ route('admin.control-acceso') }}">
                 <i class="fas fa-key"></i>
                 <span>Gestión de Accesos</span>
             </a>

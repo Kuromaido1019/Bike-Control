@@ -27,7 +27,7 @@
         th, td { border: 1px solid #bbb; padding: 7px 10px; text-align: left; }
         th {
             background: linear-gradient(90deg, #92AFD7 0%, #395B50 100%);
-            color: #fff;
+            color: #222 !important;
             font-weight: bold;
         }
         tr:nth-child(even) { background: #f7fafc; }
