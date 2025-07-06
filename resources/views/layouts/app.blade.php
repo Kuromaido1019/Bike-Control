@@ -95,7 +95,7 @@
     @include('partials.scripts')
 
     <!-- Scripts personalizados por página -->
-    @stack('custom-scripts')
+    @yield('custom-scripts')
 
     <!-- SB Admin 2 Sidebar Script -->
     <script src="{{ asset('js/sb-admin-2.min.js') }}"></script>

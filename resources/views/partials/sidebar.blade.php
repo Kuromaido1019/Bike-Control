@@ -11,6 +11,7 @@
     <hr class="sidebar-divider my-0">
 
     <!-- Nav Item - Dashboard -->
+     <div class="sidebar-heading text-white admin-heading-custom">Estadísticas</div>
     <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('home') }}">
             <i class="fa-solid fa-magnifying-glass-chart"></i>

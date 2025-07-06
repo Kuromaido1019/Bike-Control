@@ -135,6 +135,9 @@
                         <i class="fas fa-search"></i> Buscar
                     </button>
                     <a href="{{ route('admin.reports.index') }}" class="btn btn-secondary">Limpiar</a>
+                    <a href="{{ route('admin.reports.csv', array_merge(request()->all(), ['download' => 1])) }}" class="btn btn-outline-success{{ (isset($accesses) && count($accesses) > 0) ? '' : ' disabled' }}" target="_blank" id="btnCsv" aria-disabled="{{ (isset($accesses) && count($accesses) > 0) ? 'false' : 'true' }}" tabindex="{{ (isset($accesses) && count($accesses) > 0) ? '0' : '-1' }}">
+                        <i class="fas fa-file-csv"></i> Exportar CSV
+                    </a>
                     <a href="{{ route('admin.reports.pdf', array_merge(request()->all(), ['download' => 1])) }}" class="btn btn-success ms-auto{{ (isset($accesses) && count($accesses) > 0) ? '' : ' disabled' }}" target="_blank" id="btnPdf">
                         <i class="fas fa-file-pdf"></i> Generar PDF
                     </a>
@@ -190,6 +193,7 @@
 @endsection
 
 @push('custom-scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // Deshabilitar los colapsables de bicicleta y detalles si no hay fecha y hora completas
 function toggleCollapsibles() {
@@ -216,12 +220,123 @@ function togglePdfButton() {
     btnPdf.setAttribute('aria-disabled', !hasData);
     btnPdf.tabIndex = hasData ? 0 : -1;
 }
+// Deshabilitar el botón CSV si no hay registros
+function toggleCsvButton() {
+    var btnCsv = document.getElementById('btnCsv');
+    var table = document.querySelector('.table-responsive tbody');
+    if (!btnCsv || !table) return;
+    var rows = table.querySelectorAll('tr');
+    var hasData = false;
+    rows.forEach(function(row) {
+        if (row.children.length > 1) {
+            hasData = true;
+        }
+    });
+    btnCsv.classList.toggle('disabled', !hasData);
+    btnCsv.setAttribute('aria-disabled', !hasData);
+    btnCsv.tabIndex = hasData ? 0 : -1;
+}
 document.addEventListener('DOMContentLoaded', function() {
     toggleCollapsibles();
     document.getElementById('date').addEventListener('change', toggleCollapsibles);
     document.getElementById('start_time').addEventListener('change', toggleCollapsibles);
     document.getElementById('end_time').addEventListener('change', toggleCollapsibles);
     togglePdfButton();
+    toggleCsvButton();
+
+    // SweetAlert para búsqueda
+    const searchForm = document.querySelector('form[action="{{ route('admin.reports.index') }}"]');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            // Solo mostrar si no es limpiar
+            if (!e.submitter || e.submitter.type !== 'reset') {
+                const table = document.querySelector('.table-responsive tbody');
+                let hasData = false;
+                if (table) {
+                    table.querySelectorAll('tr').forEach(function(row) {
+                        if (row.children.length > 1) hasData = true;
+                    });
+                }
+                setTimeout(function() {
+                    Swal.fire({
+                        icon: hasData ? 'success' : 'warning',
+                        title: hasData ? '¡Datos encontrados!' : 'Sin resultados',
+                        text: hasData ? 'Se han encontrado registros para los filtros aplicados.' : 'No se encontraron registros para los filtros seleccionados.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }, 500);
+            }
+        });
+    }
+    // SweetAlert para limpiar filtros
+    const clearBtn = document.querySelector('a.btn-secondary[href="{{ route('admin.reports.index') }}"]');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function(e) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Filtros restablecidos',
+                text: 'Se han restablecido todos los filtros.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        });
+    }
+    // SweetAlert para descargar PDF
+    const pdfBtn = document.getElementById('btnPdf');
+    if (pdfBtn) {
+        pdfBtn.addEventListener('click', function(e) {
+            if (!pdfBtn.classList.contains('disabled')) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Descargando PDF',
+                    text: 'El archivo PDF se está generando y descargando.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+    // SweetAlert para descargar CSV
+    const csvBtn = document.getElementById('btnCsv');
+    if (csvBtn) {
+        csvBtn.addEventListener('click', function(e) {
+            if (!csvBtn.classList.contains('disabled')) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Descargando CSV',
+                    text: 'El archivo CSV se está generando y descargando.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+
+    // SweetAlert para búsqueda (mostrar después de recarga con un mensaje de sesión)
+    @if(session('search_result'))
+        <script>
+        Swal.fire({
+            icon: '{{ session('search_result.icon') }}',
+            title: '{{ session('search_result.title') }}',
+            text: '{{ session('search_result.text') }}',
+            timer: 2000,
+            showConfirmButton: false
+        });
+        </script>
+    @endif
+    // SweetAlert para limpiar filtros (mensaje de sesión)
+    @if(session('clear_filters'))
+        <script>
+        Swal.fire({
+            icon: 'info',
+            title: 'Filtros restablecidos',
+            text: 'Se han restablecido todos los filtros.',
+            timer: 1500,
+            showConfirmButton: false
+        });
+        </script>
+    @endif
 });
 </script>
 @endpush

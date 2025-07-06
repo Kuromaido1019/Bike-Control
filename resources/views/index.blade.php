@@ -131,6 +131,121 @@
         </div>
     </div>
     <div class="alert alert-info">Recuerda revisar los ingresos y gestionar los usuarios del sistema periódicamente.</div>
+    <!-- Tabs para agrupar los gráficos -->
+    <ul class="nav nav-tabs mb-4" id="statsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="accesos-tab" data-bs-toggle="tab" data-bs-target="#accesos" type="button" role="tab" aria-controls="accesos" aria-selected="true">Accesos</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="bicicletas-tab" data-bs-toggle="tab" data-bs-target="#bicicletas" type="button" role="tab" aria-controls="bicicletas" aria-selected="false">Bicicletas</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="usuarios-tab" data-bs-toggle="tab" data-bs-target="#usuarios" type="button" role="tab" aria-controls="usuarios" aria-selected="false">Usuarios</button>
+      </li>
+    </ul>
+    <div class="tab-content" id="statsTabsContent">
+      <!-- Tab Accesos -->
+      <div class="tab-pane fade show active" id="accesos" role="tabpanel" aria-labelledby="accesos-tab">
+        <div class="row">
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Distribución de Tipos de Acceso (Mes Actual)</div>
+              <div class="card-body">
+                <div id="pieChartStatic" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Accesos por Día (Últimos 7 días)</div>
+              <div class="card-body">
+                <div id="barChartAccessesByDay" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Estado de Accesos (Activos vs Finalizados)</div>
+              <div class="card-body">
+                <div id="pieChartEstadoAcceso" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Duración Promedio de Accesos por Día (minutos, últimos 7 días)</div>
+              <div class="card-body">
+                <div id="chartAvgDurationByDay" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Tab Bicicletas -->
+      <div class="tab-pane fade" id="bicicletas" role="tabpanel" aria-labelledby="bicicletas-tab">
+        <div class="row">
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Bicicletas por Marca</div>
+              <div class="card-body">
+                <div id="chart-bikes-by-brand" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Bicicletas por Color</div>
+              <div class="card-body">
+                <div id="chart-bikes-by-color" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Bicicletas por Estado</div>
+              <div class="card-body">
+                <div id="chart-bikes-by-status" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Tab Usuarios -->
+      <div class="tab-pane fade" id="usuarios" role="tabpanel" aria-labelledby="usuarios-tab">
+        <div class="row">
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Top 5 Usuarios con Más Ingresos (Mes Actual)</div>
+              <div class="card-body">
+                <div id="barChartTopUsers" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Nuevos Usuarios por Mes (Últimos 6 meses)</div>
+              <div class="card-body">
+                <div id="barChartNewUsersByMonth" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xl-6 mb-4">
+            <div class="card shadow">
+              <div class="card-header">Usuarios Activos vs Inactivos (sin accesos en 30 días)</div>
+              <div class="card-body">
+                <div id="pieChartActiveInactiveUsers" style="height: 350px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 @endif
 
 @if(Auth::user()->role === 'guardia')
@@ -353,39 +468,161 @@
 @endsection
 
 @section('custom-scripts')
-<!-- Page level plugins -->
-<script src="{{ asset('vendor/chart.js/Chart.min.js') }}"></script>
+<!-- ApexCharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-@if(Auth::user()->role === 'visitante' && isset($chartData))
-    const ctx = document.getElementById('accessChart').getContext('2d');
-    const chartData = {
-        labels: {!! json_encode(array_column($chartData, 'date')) !!},
-        datasets: [{
-            label: 'Ingresos',
-            data: {!! json_encode(array_column($chartData, 'count')) !!},
-            backgroundColor: '#92AFD7',
-            borderColor: '#395B50',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.3
-        }]
-    };
-    new Chart(ctx, {
-        type: 'line',
-        data: chartData,
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
+document.addEventListener('DOMContentLoaded', function() {
+    // Pie chart dinámico con datos de la BD
+    var pieDiv = document.querySelector("#pieChartStatic");
+    if (pieDiv) {
+        var optionsPie = {
+            chart: { type: 'pie', height: 350 },
+            series: @json($tipoAccesoData),
+            labels: @json($tipoAccesoLabels),
+            colors: ['#1cc88a', '#e74a3b', '#36b9cc']
+        };
+        var chartPie = new ApexCharts(pieDiv, optionsPie);
+        chartPie.render();
+    }
+    // Gráfico de barras: Accesos por día
+    var barDiv = document.querySelector("#barChartAccessesByDay");
+    if (barDiv) {
+        var optionsBar = {
+            chart: { type: 'bar', height: 350 },
+            series: [{
+                name: 'Accesos',
+                data: @json($accessesByDayData)
+            }],
+            xaxis: {
+                categories: @json($accessesByDayLabels)
             },
-            scales: {
-                y: { beginAtZero: true, precision: 0 }
-            }
-        }
-    });
-@endif
+            colors: ['#4e73df']
+        };
+        var chartBar = new ApexCharts(barDiv, optionsBar);
+        chartBar.render();
+    }
+    // Gráfico de pastel: Estado de accesos
+    var estadoDiv = document.querySelector("#pieChartEstadoAcceso");
+    if (estadoDiv) {
+        var optionsEstado = {
+            chart: { type: 'pie', height: 350 },
+            series: @json($estadoAccesoData),
+            labels: @json($estadoAccesoLabels),
+            colors: ['#f6c23e', '#858796']
+        };
+        var chartEstado = new ApexCharts(estadoDiv, optionsEstado);
+        chartEstado.render();
+    }
+    // Gráfico de línea: Duración promedio de accesos por día
+    var avgDurationDiv = document.querySelector("#chartAvgDurationByDay");
+    if (avgDurationDiv) {
+        var optionsAvgDuration = {
+            chart: { type: 'line', height: 350 },
+            series: [{
+                name: 'Duración promedio (min)',
+                data: @json($avgDurationData)
+            }],
+            xaxis: {
+                categories: @json($avgDurationLabels)
+            },
+            colors: ['#e67e22']
+        };
+        var chartAvgDuration = new ApexCharts(avgDurationDiv, optionsAvgDuration);
+        chartAvgDuration.render();
+    }
+
+    // Gráfico de barras: Top 5 usuarios
+    var topUsersDiv = document.querySelector("#barChartTopUsers");
+    if (topUsersDiv) {
+        var optionsTopUsers = {
+            chart: { type: 'bar', height: 350 },
+            series: [{
+                name: 'Ingresos',
+                data: @json($topUsersData)
+            }],
+            xaxis: {
+                categories: @json($topUsersLabels)
+            },
+            colors: ['#36b9cc']
+        };
+        var chartTopUsers = new ApexCharts(topUsersDiv, optionsTopUsers);
+        chartTopUsers.render();
+    }
+
+    // Gráfico de barras: Nuevos usuarios por mes
+    var newUsersDiv = document.querySelector("#barChartNewUsersByMonth");
+    if (newUsersDiv) {
+        var optionsNewUsers = {
+            chart: { type: 'bar', height: 350 },
+            series: [{
+                name: 'Nuevos usuarios',
+                data: @json($newUsersByMonthData)
+            }],
+            xaxis: {
+                categories: @json($newUsersByMonthLabels)
+            },
+            colors: ['#1cc88a']
+        };
+        var chartNewUsers = new ApexCharts(newUsersDiv, optionsNewUsers);
+        chartNewUsers.render();
+    }
+
+    // Gráfico de pastel: Usuarios activos vs inactivos
+    var activeInactiveDiv = document.querySelector("#pieChartActiveInactiveUsers");
+    if (activeInactiveDiv) {
+        var optionsActiveInactive = {
+            chart: { type: 'pie', height: 350 },
+            series: @json($activeInactiveUsersData),
+            labels: @json($activeInactiveUsersLabels),
+            colors: ['#36b9cc', '#e74a3b']
+        };
+        var chartActiveInactive = new ApexCharts(activeInactiveDiv, optionsActiveInactive);
+        chartActiveInactive.render();
+    }
+
+    // Bicicletas por Marca
+    var bikesByBrandDiv = document.querySelector("#chart-bikes-by-brand");
+    if (bikesByBrandDiv) {
+        var optionsBikesByBrand = {
+            chart: { type: 'bar', height: 350 },
+            series: [{
+                name: 'Cantidad',
+                data: @json($bikesByBrandData)
+            }],
+            xaxis: {
+                categories: @json($bikesByBrandLabels)
+            },
+            colors: ['#f6c23e']
+        };
+        var chartBikesByBrand = new ApexCharts(bikesByBrandDiv, optionsBikesByBrand);
+        chartBikesByBrand.render();
+    }
+
+    // Bicicletas por Color
+    var bikesByColorDiv = document.querySelector("#chart-bikes-by-color");
+    if (bikesByColorDiv) {
+        var optionsBikesByColor = {
+            chart: { type: 'pie', height: 350 },
+            series: @json($bikesByColorData),
+            labels: @json($bikesByColorLabels),
+            colors: ['#1cc88a', '#e74a3b', '#36b9cc', '#4e73df', '#f6c23e', '#858796']
+        };
+        var chartBikesByColor = new ApexCharts(bikesByColorDiv, optionsBikesByColor);
+        chartBikesByColor.render();
+    }
+
+    // Bicicletas por Estado
+    var bikesByStatusDiv = document.querySelector("#chart-bikes-by-status");
+    if (bikesByStatusDiv) {
+        var optionsBikesByStatus = {
+            chart: { type: 'pie', height: 350 },
+            series: @json($bikesByStatusData),
+            labels: @json($bikesByStatusLabels),
+            colors: ['#36b9cc', '#e74a3b', '#1cc88a']
+        };
+        var chartBikesByStatus = new ApexCharts(bikesByStatusDiv, optionsBikesByStatus);
+        chartBikesByStatus.render();
+    }
+});
 </script>
-<!-- Page level custom scripts -->
-<script src="{{ asset('js/demo/chart-area-demo.js') }}"></script>
-<script src="{{ asset('js/demo/chart-pie-demo.js') }}"></script>
 @endsection

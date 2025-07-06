@@ -76,6 +76,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/reportes', [ReportController::class, 'index'])->name('reports.index');
         // Nueva ruta para PDF de accesos filtrados por fecha y hora
         Route::get('/reportes/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
+        // Nueva ruta para CSV de accesos filtrados por fecha y hora
+        Route::get('/reportes/csv', [ReportController::class, 'csv'])->name('reports.csv');
 
         Route::post('users/{user}/activate', [UserController::class, 'activate'])->name('users.activate');
         Route::post('users/{user}/inactivate', [UserController::class, 'inactivate'])->name('users.inactivate');
