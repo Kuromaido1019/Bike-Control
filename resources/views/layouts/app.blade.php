@@ -54,6 +54,13 @@
     <!-- Importación local del script html5-qrcode -->
     <script src="{{ asset('js/html5-qrcode.min.js') }}"></script>
 </head>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <!-- DataTables JS y dependencias -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+</head>
 <body id="page-top" class="sidebar-toggled">
     <!-- Page Wrapper -->
     <div id="wrapper">
@@ -128,6 +135,13 @@
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Inicialización DataTables solo en tablas con clase .datatable -->
+    <script>
+        $(document).ready(function() {
+            $('.datatable').DataTable();
+        });
+    </script>
 
 </body>
 </html>

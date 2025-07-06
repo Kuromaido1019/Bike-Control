@@ -14,7 +14,7 @@
                 <div class="card-body">
                     <!-- Tabla de accesos -->
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="accessTable" width="100%" cellspacing="0">
+                        <table class="table table-bordered table-hover datatable" id="accessTable" width="100%" cellspacing="0">
                             <thead class="table-light">
                                 <tr>
                                     <th>ID</th>

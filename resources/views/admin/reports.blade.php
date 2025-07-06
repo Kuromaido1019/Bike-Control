@@ -115,14 +115,6 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="tipo_acceso" class="form-label">Tipo de Acceso</label>
-                                    <select class="form-select" id="tipo_acceso" name="tipo_acceso">
-                                        <option value="">Todos</option>
-                                        <option value="entrada" {{ request('tipo_acceso') == 'entrada' ? 'selected' : '' }}>Entrada</option>
-                                        <option value="salida" {{ request('tipo_acceso') == 'salida' ? 'selected' : '' }}>Salida</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
                                     <label for="observation" class="form-label">Observación contiene</label>
                                     <input type="text" class="form-control" id="observation" name="observation" value="{{ request('observation') }}" placeholder="Palabra clave">
                                 </div>
@@ -153,7 +145,6 @@
                                 <th>RUT</th>
                                 <th>Guardia</th>
                                 <th>Bicicleta</th>
-                                <th>Tipo de Acceso</th>
                                 <th>Entrada</th>
                                 <th>Salida</th>
                                 <th>Observación</th>
@@ -166,16 +157,7 @@
                                 <td>{{ $access->user ? $access->user->name : '---' }}</td>
                                 <td>{{ $access->user ? $access->user->rut : '---' }}</td>
                                 <td>{{ $access->guardUser ? $access->guardUser->name : '---' }}</td>
-                                <td>{{ $access->bike ? $access->bike->brand . ' ' . $access->bike->model : '---' }}</td>
-                                <td>
-                                    @if($access->entrance_time && !$access->exit_time)
-                                        Entrada
-                                    @elseif($access->exit_time)
-                                        Salida
-                                    @else
-                                        -
-                                    @endif
-                                </td>
+                                <td>{{ $access->bike ? $access->bike->brand . ' ' . $access->bike->model : '---' }}</td>                           
                                 <td>{{ $access->entrance_time ? \Carbon\Carbon::parse($access->entrance_time)->format('d/m/Y H:i') : '---' }}</td>
                                 <td>{{ $access->exit_time ? \Carbon\Carbon::parse($access->exit_time)->format('d/m/Y H:i') : '---' }}</td>
                                 <td>{{ $access->observation ?? '' }}</td>

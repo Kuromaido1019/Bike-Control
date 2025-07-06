@@ -104,32 +104,7 @@
             </div>
         </div>
     </div>
-    <!-- Ranking de usuarios más activos -->
-    <div class="card mb-4">
-        <div class="card-header">Top 5 usuarios con más ingresos este mes</div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-striped mb-0">
-                    <thead>
-                        <tr>
-                            <th>Usuario</th>
-                            <th>Ingresos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($topUsers as $userStat)
-                            <tr>
-                                <td>{{ $userStat->user ? $userStat->user->name : '---' }}</td>
-                                <td>{{ $userStat->total }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="2">Sin datos</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    
     <div class="alert alert-info">Recuerda revisar los ingresos y gestionar los usuarios del sistema periódicamente.</div>
     <!-- Tabs para agrupar los gráficos -->
     <ul class="nav nav-tabs mb-4" id="statsTabs" role="tablist">

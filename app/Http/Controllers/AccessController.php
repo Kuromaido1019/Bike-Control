@@ -15,11 +15,17 @@ class AccessController extends Controller
 {
     public function index()
     {
-        // Filtrar accesos solo por la fecha de hoy usando SQL puro (CURDATE())
-        $accesses = Access::with(['user', 'guardUser', 'bike'])
-            ->whereRaw('DATE(entrance_time) = CURDATE()')
-            ->orderByDesc('entrance_time')
-            ->get();
+        // Mostrar todos los accesos si es admin, solo los de hoy si es guardia
+        if (request()->is('admin/*')) {
+            $accesses = Access::with(['user', 'guardUser', 'bike'])
+                ->orderByDesc('entrance_time')
+                ->get();
+        } else {
+            $accesses = Access::with(['user', 'guardUser', 'bike'])
+                ->whereRaw('DATE(entrance_time) = CURDATE()')
+                ->orderByDesc('entrance_time')
+                ->get();
+        }
         $bikes = Bike::all();
         $visitantes = User::where('role', 'visitante')->get();
         return view(request()->is('admin/*') ? 'admin.control-acceso' : 'guardia.control-acceso', compact('accesses', 'bikes', 'visitantes'));
