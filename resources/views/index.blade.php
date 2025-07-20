@@ -119,6 +119,7 @@
       </li>
     </ul>
     <div class="tab-content" id="statsTabsContent">
+      
       <!-- Tab Accesos -->
       <div class="tab-pane fade show active" id="accesos" role="tabpanel" aria-labelledby="accesos-tab">
         <div class="row">
@@ -442,7 +443,7 @@
 @endif
 @endsection
 
-@section('custom-scripts')
+@push('custom-scripts')
 <!-- ApexCharts CDN -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
@@ -600,4 +601,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+@endpush
