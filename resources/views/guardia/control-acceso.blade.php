@@ -108,9 +108,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="visitor_rut" class="form-label">RUT del Visitante</label>
-                        <input type="text" class="form-control" id="visitor_rut" name="visitor_rut" required autocomplete="off">
+                    <div class="mb-3 d-flex align-items-end gap-2">
+                        <div style="flex:1;">
+                            <label for="visitor_rut" class="form-label">RUT del Visitante</label>
+                            <input type="text" class="form-control" id="visitor_rut" name="visitor_rut" required autocomplete="off">
+                        </div>
+                        <button type="button" class="btn btn-info mb-1" id="btnValidarRut">Validar</button>
                     </div>
                     <div class="mb-3">
                         <label for="bike_id" class="form-label">Bicicleta</label>
@@ -357,15 +360,27 @@ $(document).ready(function() {
     });
 
     // Lógica para cargar bicicletas según RUT
-    $('#visitor_rut').on('change', function(e) {
-        e.preventDefault(); // Evitar el comportamiento predeterminado
-        var rut = $(this).val();
-        if (!rut) return;
+    $('#btnValidarRut').on('click', function(e) {
+        e.preventDefault();
+        console.log('Botón validar presionado');
+        var rut = $('#visitor_rut').val();
+        if (!rut) {
+            console.log('RUT vacío');
+            Swal.fire({
+                icon: 'warning',
+                title: 'RUT vacío',
+                text: 'Por favor ingresa el RUT del visitante antes de validar.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            return;
+        }
         $('#bike_id').prop('disabled', true).html('<option value="">Buscando...</option>');
         $.ajax({
-            url: '/api/bicicletas-por-rut/' + rut,
+            url: '/guardia/control-acceso/bikes-by-rut/' + rut,
             method: 'GET',
             success: function(data) {
+                console.log('Respuesta AJAX:', data);
                 if (data.length > 0) {
                     var options = '<option value="">Sin bicicleta</option>';
                     data.forEach(function(bike) {
@@ -374,6 +389,13 @@ $(document).ready(function() {
                     $('#bike_id').html(options).prop('disabled', false);
                     $('#bike_id').removeClass('is-invalid');
                     $('#bike_id').next('.invalid-feedback').remove();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Bicicleta encontrada',
+                        text: 'El visitante tiene bicicletas asociadas. Selecciona una para registrar el acceso.',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
                 } else {
                     $('#bike_id').html('<option value="">Sin bicicletas registradas</option>').prop('disabled', true);
                     if ($('#bike_id').next('.invalid-feedback').length === 0) {
@@ -382,13 +404,21 @@ $(document).ready(function() {
                     if ($('#addBikeBtn').length === 0) {
                         $('#bike_id').parent().append('<button type="button" class="btn btn-warning mt-2" id="addBikeBtn">Asociar Bicicleta</button>');
                     }
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sin bicicletas',
+                        text: 'El visitante no tiene bicicletas asociadas. No se puede registrar el acceso.',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
                 }
 
                 // Asegurarse de que el modal permanezca abierto
                 var accessModal = new bootstrap.Modal(document.getElementById('addAccessModal'));
                 accessModal.show();
             },
-            error: function() {
+            error: function(xhr) {
+                console.log('Error AJAX:', xhr.status);
                 $('#bike_id').html('<option value="">Error al buscar</option>').prop('disabled', true);
                 if ($('#bike_id').next('.invalid-feedback').length === 0) {
                     $('#bike_id').addClass('is-invalid').after('<div class="invalid-feedback">Error al buscar bicicletas.</div>');

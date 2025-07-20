@@ -94,6 +94,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/guard/control-acceso/quick/user', [\App\Http\Controllers\AccessController::class, 'quickUser'])->name('guard.control-acceso.quick.user');
     Route::post('/guard/control-acceso/quick/bike', [\App\Http\Controllers\AccessController::class, 'quickBike'])->name('guard.control-acceso.quick.bike');
     Route::delete('/guard/control-acceso/quick/cancel/{user}', [\App\Http\Controllers\AccessController::class, 'quickCancel']);
+    // Ruta AJAX para bicicletas por RUT en guardia
+    Route::get('/guardia/control-acceso/bikes-by-rut/{rut}', [\App\Http\Controllers\AccessController::class, 'getBikesByRut']);
 
     // Rutas para Visitantes
     Route::middleware('can:isVisitor')->group(function () {
